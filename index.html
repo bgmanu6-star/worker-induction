@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- SheetJS for Excel Export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Firebase App & Firestore SDKs (Compat versions for seamless integration) -->
+    <!-- Firebase App & Firestore SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <!-- Lucide Icons -->
@@ -96,7 +96,7 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Serial No *</label>
-                            <input type="text" id="serialNo" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="e.g. 001">
+                            <input type="text" id="serialNo" required readonly class="w-full px-3 py-2 text-sm bg-slate-100 border border-slate-200 rounded-lg text-slate-600 font-bold cursor-not-allowed" placeholder="Auto">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Date of Induction *</label>
@@ -228,7 +228,6 @@
 
     <!-- Firebase & App Logic Script -->
     <script>
-        // --- FIREBASE LIVE CLOUD CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyAIkudKei-g_EB7rSKOx3ry07ow6sz6NUQ",
             authDomain: "workerinduction-bf56c.firebaseapp.com",
@@ -238,7 +237,6 @@
             appId: "1:61210722711:web:58d2f0987dab41696984d2"
         };
 
-        // Initialize Firebase & Firestore
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -248,7 +246,6 @@
             document.getElementById('inductionDate').valueAsDate = new Date();
             lucide.createIcons();
             
-            // Listen to real-time updates from Firestore cloud database
             db.collection("workers").orderBy("serialNo", "asc").onSnapshot((snapshot) => {
                 workers = [];
                 snapshot.forEach((doc) => {
@@ -256,11 +253,28 @@
                 });
                 renderTable();
                 updateStats();
+                setAutoSerialNo();
             }, (error) => {
                 console.error("Firestore Error: ", error);
                 showToast("Cloud sync connection error.", "error");
             });
         });
+
+        function setAutoSerialNo() {
+            if (document.getElementById('editId').value) return; // Don't overwrite if editing
+            let nextNum = 1;
+            if (workers.length > 0) {
+                // Find highest existing serial number
+                const nums = workers.map(w => parseInt(w.serialNo)).filter(n => !isNaN(n));
+                if (nums.length > 0) {
+                    nextNum = Math.max(...nums) + 1;
+                } else {
+                    nextNum = workers.length + 1;
+                }
+            }
+            // Format as 3-digit padded number e.g. 001, 002...
+            document.getElementById('serialNo').value = String(nextNum).padStart(3, '0');
+        }
 
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
@@ -306,9 +320,9 @@
             const phone = document.getElementById('phone').value.trim();
             const editId = document.getElementById('editId').value;
 
-            const duplicate = workers.find(w => w.id !== editId && (w.serialNo === serialNo || w.aadhaar === aadhaar || w.phone === phone));
+            const duplicate = workers.find(w => w.id !== editId && (w.aadhaar === aadhaar || w.phone === phone));
             if (duplicate) {
-                showToast(`Duplicate found! Serial No, Aadhaar, or Phone already exists for ${duplicate.name}.`, "error");
+                showToast(`Duplicate found! Aadhaar or Phone already exists for ${duplicate.name}.`, "error");
                 return;
             }
 
@@ -358,6 +372,7 @@
             document.getElementById('formTitle').innerHTML = '<i data-lucide="user-plus" class="w-5 h-5 text-indigo-600"></i> New Induction Entry';
             document.getElementById('resetFormBtn').classList.add('hidden');
             document.getElementById('submitBtn').innerHTML = '<i data-lucide="user-check" class="w-4 h-4"></i> Save Induction Record';
+            setAutoSerialNo();
             lucide.createIcons();
         }
 
