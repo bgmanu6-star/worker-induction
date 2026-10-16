@@ -95,12 +95,12 @@
 
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Serial No *</label>
-                            <input type="text" id="serialNo" required readonly class="w-full px-3 py-2 text-sm bg-slate-100 border border-slate-200 rounded-lg text-slate-600 font-bold cursor-not-allowed" placeholder="Auto">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Serial No</label>
+                            <input type="text" id="serialNo" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all font-bold text-indigo-600" placeholder="e.g. 001">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Date of Induction *</label>
-                            <input type="date" id="inductionDate" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Date of Induction</label>
+                            <input type="date" id="inductionDate" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all">
                         </div>
                     </div>
 
@@ -110,14 +110,14 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Father's Name *</label>
-                        <input type="text" id="fatherName" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Father's name">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Father's Name</label>
+                        <input type="text" id="fatherName" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Father's name (Optional)">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Designation *</label>
-                            <input type="text" id="designation" list="designationList" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="e.g. Welder">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Designation</label>
+                            <input type="text" id="designation" list="designationList" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="e.g. Welder">
                             <datalist id="designationList">
                                 <option value="Safety Officer"></option>
                                 <option value="Welder"></option>
@@ -128,16 +128,16 @@
                             </datalist>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Agency / Contractor *</label>
-                            <input type="text" id="agency" list="agencySuggestions" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Agency name">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Agency / Contractor</label>
+                            <input type="text" id="agency" list="agencySuggestions" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Agency name">
                             <datalist id="agencySuggestions"></datalist>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Date of Birth *</label>
-                            <input type="text" id="dob" required onfocus="this.type='date'" onblur="if(!this.value)this.type='text'" onchange="calculateAge()" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Type or pick DOB">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Date of Birth</label>
+                            <input type="text" id="dob" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'" onchange="calculateAge()" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Type or pick DOB">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Calculated Age</label>
@@ -146,35 +146,35 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Aadhaar Card Number *</label>
-                        <input type="text" id="aadhaar" required maxlength="14" placeholder="1234 5678 9012" oninput="formatAadhaar(this)" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Aadhaar Card Number</label>
+                        <input type="text" id="aadhaar" maxlength="14" placeholder="1234 5678 9012" oninput="formatAadhaar(this)" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Phone Number *</label>
-                            <input type="tel" id="phone" required maxlength="10" placeholder="10-digit number" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Phone Number</label>
+                            <input type="tel" id="phone" maxlength="10" placeholder="10-digit number" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Emergency Contact *</label>
-                            <input type="tel" id="emergency" required maxlength="10" placeholder="Emergency number" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Emergency Contact</label>
+                            <input type="tel" id="emergency" maxlength="10" placeholder="Emergency number" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all">
                         </div>
                     </div>
 
                     <div>
                         <div class="flex justify-between items-center mb-1">
-                            <label class="block text-xs font-semibold text-slate-600">Permanent Address *</label>
+                            <label class="block text-xs font-semibold text-slate-600">Permanent Address</label>
                             <div class="flex items-center gap-1">
                                 <input type="text" id="permPincode" maxlength="6" oninput="handlePincodeInput(this.value, 'permanentAddress', 'permLastFetched')" placeholder="PIN Code" class="w-20 px-2 py-0.5 text-[11px] bg-slate-100 border border-slate-300 rounded focus:bg-white outline-none font-mono" title="Type 6-digit PIN code">
                                 <input type="hidden" id="permLastFetched" value="">
                             </div>
                         </div>
-                        <input type="text" id="permanentAddress" list="addressSuggestions" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Type street, landmark or enter PIN...">
+                        <input type="text" id="permanentAddress" list="addressSuggestions" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Type street, landmark or enter PIN...">
                     </div>
 
                     <div>
                         <div class="flex justify-between items-center mb-1">
-                            <label class="block text-xs font-semibold text-slate-600">Present Address *</label>
+                            <label class="block text-xs font-semibold text-slate-600">Present Address</label>
                             <div class="flex items-center gap-2">
                                 <input type="text" id="presPincode" maxlength="6" oninput="handlePincodeInput(this.value, 'presentAddress', 'presLastFetched')" placeholder="PIN Code" class="w-20 px-2 py-0.5 text-[11px] bg-slate-100 border border-slate-300 rounded focus:bg-white outline-none font-mono" title="Type 6-digit PIN code">
                                 <input type="hidden" id="presLastFetched" value="">
@@ -183,7 +183,7 @@
                                 </label>
                             </div>
                         </div>
-                        <input type="text" id="presentAddress" list="addressSuggestions" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Type street, landmark or enter PIN...">
+                        <input type="text" id="presentAddress" list="addressSuggestions" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Type street, landmark or enter PIN...">
                     </div>
 
                     <!-- Autocomplete suggestion datalists -->
@@ -386,14 +386,16 @@
         async function handleFormSubmit(event) {
             event.preventDefault();
 
-            const serialNo = document.getElementById('serialNo').value.trim();
+            const serialNo = document.getElementById('serialNo').value.trim() || '000';
             const aadhaar = document.getElementById('aadhaar').value.trim();
             const editId = document.getElementById('editId').value;
 
-            const duplicate = workers.find(w => w.id !== editId && w.aadhaar === aadhaar);
-            if (duplicate) {
-                showToast(`Aadhaar already registered! Matches Sl No: ${duplicate.serialNo} (${duplicate.name})`, "error");
-                return;
+            // Check if Aadhaar is already registered elsewhere
+            const existingWithSameAadhaar = aadhaar ? workers.filter(w => w.id !== editId && w.aadhaar === aadhaar) : [];
+            const isDuplicateAadhaar = existingWithSameAadhaar.length > 0;
+
+            if (isDuplicateAadhaar) {
+                showToast(`Note: Duplicate Aadhaar detected (matches Sl No: ${existingWithSameAadhaar.map(w => w.serialNo).join(', ')})`, "error");
             }
 
             const workerData = {
@@ -410,6 +412,7 @@
                 permanentAddress: document.getElementById('permanentAddress').value.trim(),
                 presentAddress: document.getElementById('presentAddress').value.trim(),
                 inductionDate: document.getElementById('inductionDate').value,
+                isDuplicateAadhaar: isDuplicateAadhaar,
                 updatedAt: new Date().toISOString()
             };
 
@@ -502,10 +505,11 @@
             }
 
             filtered.forEach((w) => {
+                const duplicateBadge = w.isDuplicateAadhaar ? `<span class="ml-2 bg-amber-100 text-amber-700 border border-amber-300 px-1.5 py-0.5 rounded text-[10px] font-bold">Duplicate Aadhaar</span>` : '';
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50/80 transition-all border-b border-slate-100';
                 tr.innerHTML = `
-                    <td class="p-3 font-semibold text-indigo-600">${w.serialNo || '-'}</td>
+                    <td class="p-3 font-semibold text-indigo-600">${w.serialNo || '-'}${duplicateBadge}</td>
                     <td class="p-3 text-slate-600">${w.inductionDate || '-'}</td>
                     <td class="p-3">
                         <p class="font-bold text-slate-800">${w.name || '-'}</p>
@@ -554,7 +558,7 @@
             document.getElementById('presentAddress').value = w.presentAddress || '';
 
             document.getElementById('formTitle').innerHTML = '<i data-lucide="user-pen" class="w-5 h-5 text-indigo-600"></i> Edit Worker Record';
-            document.getElementById('resetFormBtn').classList.add('hidden');
+            document.getElementById('resetFormBtn').classList.remove('hidden');
             document.getElementById('submitBtn').innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Update Worker Record';
             window.scrollTo({ top: 0, behavior: 'smooth' });
             lucide.createIcons();
@@ -567,24 +571,25 @@
             }
 
             const exportData = workers.map(w => ({
-                "Serial No": w.serialNo,
-                "Induction Date": w.inductionDate,
-                "Worker Name": w.name,
-                "Father's Name": w.fatherName,
-                "Designation": w.designation,
-                "Agency": w.agency,
-                "Date of Birth": w.dob,
-                "Age": w.age,
-                "Aadhaar Number": w.aadhaar,
-                "Phone Number": w.phone,
-                "Emergency Contact": w.emergency,
-                "Permanent Address": w.permanentAddress,
-                "Present Address": w.presentAddress
+                "Serial No": w.serialNo || '',
+                "Status / Remarks": w.isDuplicateAadhaar ? "Duplicate Aadhaar" : "Regular Entry",
+                "Induction Date": w.inductionDate || '',
+                "Worker Name": w.name || '',
+                "Father's Name": w.fatherName || '',
+                "Designation": w.designation || '',
+                "Agency": w.agency || '',
+                "Date of Birth": w.dob || '',
+                "Age": w.age || '',
+                "Aadhaar Number": w.aadhaar || '',
+                "Phone Number": w.phone || '',
+                "Emergency Contact": w.emergency || '',
+                "Permanent Address": w.permanentAddress || '',
+                "Present Address": w.presentAddress || ''
             }));
 
             const worksheet = XLSX.utils.json_to_sheet(exportData);
 
-            // Auto-fit column widths so all text is fully visible without being clipped
+            // Auto-fit column widths
             const colWidths = [];
             exportData.forEach(row => {
                 Object.keys(row).forEach((key, i) => {
@@ -593,7 +598,12 @@
                     colWidths[i] = Math.max(colWidths[i] || 10, len + 3);
                 });
             });
-            worksheet['!cols'] = colWidths.map(w => ({ wch: Math.min(w, 45) })); // Max cap width to look clean
+            worksheet['!cols'] = colWidths.map(w => ({ wch: Math.min(w, 45) }));
+
+            // Set comfortable row heights (Taller header row, optimal data row height)
+            const rowHeights = [{ hpt: 30 }]; // Header row height
+            exportData.forEach(() => rowHeights.push({ hpt: 24 })); // Data rows height
+            worksheet['!rows'] = rowHeights;
 
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Worker Inductions");
