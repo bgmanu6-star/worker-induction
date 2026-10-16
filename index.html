@@ -11,6 +11,8 @@
     <!-- Firebase App & Firestore SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <!-- QRCode Generator Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -29,7 +31,11 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-bold tracking-tight">Worker Induction Register</h1>
-                    <p class="text-xs text-indigo-200">Live Multi-Device Cloud Portal</p>
+                    <p class="text-xs text-indigo-200 flex items-center gap-1.5 mt-0.5">
+                        <span>Live Multi-Device Cloud Portal</span>
+                        <span class="text-indigo-300">•</span>
+                        <span class="text-indigo-100 font-medium italic">Crafted by Manu Brahma</span>
+                    </p>
                 </div>
             </div>
             <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
@@ -186,6 +192,24 @@
                         <input type="text" id="presentAddress" list="addressSuggestions" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Type street, landmark or enter PIN...">
                     </div>
 
+                    <!-- Photo Upload Section (Optional) -->
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+                        <label class="block text-xs font-semibold text-slate-600">Worker Photo <span class="text-slate-400 font-normal">(Optional)</span></label>
+                        <div class="flex items-center gap-3">
+                            <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="previewImage(event, 'photoPreview', 'base64Photo')" class="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                            <img id="photoPreview" class="w-12 h-12 object-cover rounded-lg border border-slate-300 hidden" alt="Preview">
+                        </div>
+                    </div>
+
+                    <!-- Signature Image Upload Section (Optional) -->
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+                        <label class="block text-xs font-semibold text-slate-600">Worker Signature Image <span class="text-slate-400 font-normal">(Optional)</span></label>
+                        <div class="flex items-center gap-3">
+                            <input type="file" id="signatureInput" accept="image/*" onchange="previewImage(event, 'sigPreview', 'base64Signature')" class="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                            <img id="sigPreview" class="w-16 h-10 object-contain rounded-lg border border-slate-300 bg-white hidden" alt="Signature Preview">
+                        </div>
+                    </div>
+
                     <!-- Autocomplete suggestion datalists -->
                     <datalist id="addressSuggestions"></datalist>
 
@@ -215,6 +239,7 @@
                         <table class="w-full text-left border-collapse text-xs">
                             <thead class="bg-slate-100 text-slate-600 uppercase font-semibold sticky top-0 z-10 border-b border-slate-200">
                                 <tr>
+                                    <th class="p-3">Media / QR</th>
                                     <th class="p-3">Sl No</th>
                                     <th class="p-3">Induction Date</th>
                                     <th class="p-3">Worker Details</th>
@@ -255,6 +280,8 @@
         const db = firebase.firestore();
 
         let workers = [];
+        let base64Photo = "";
+        let base64Signature = "";
 
         window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('inductionDate').valueAsDate = new Date();
@@ -274,6 +301,51 @@
                 showToast("Cloud sync connection error.", "error");
             });
         });
+
+        // --- IMAGE PREVIEW HELPER ---
+        function previewImage(event, previewId, targetVarName) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (targetVarName === 'base64Photo') base64Photo = e.target.result;
+                if (targetVarName === 'base64Signature') base64Signature = e.target.result;
+
+                const preview = document.getElementById(previewId);
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+            }
+            reader.readAsDataURL(file);
+        }
+
+        // --- QR CODE GENERATOR ---
+        function generateQRCodeBase64(text) {
+            try {
+                const qr = qrcode(0, 'M');
+                qr.addData(text);
+                qr.make();
+                const cellSize = 4;
+                const margin = 8;
+                const size = qr.getModuleCount() * cellSize + margin * 2;
+                const qrCanvas = document.createElement('canvas');
+                qrCanvas.width = size;
+                qrCanvas.height = size;
+                const qCtx = qrCanvas.getContext('2d');
+                qCtx.fillStyle = '#ffffff';
+                qCtx.fillRect(0, 0, size, size);
+                qCtx.fillStyle = '#000000';
+                for (let r = 0; r < qr.getModuleCount(); r++) {
+                    for (let c = 0; c < qr.getModuleCount(); c++) {
+                        if (qr.isDark(r, c)) {
+                            qCtx.fillRect(margin + c * cellSize, margin + r * cellSize, cellSize, cellSize);
+                        }
+                    }
+                }
+                return qrCanvas.toDataURL('image/png');
+            } catch (err) {
+                return "";
+            }
+        }
 
         function updateSuggestions() {
             const allAddresses = [...new Set([
@@ -387,10 +459,10 @@
             event.preventDefault();
 
             const serialNo = document.getElementById('serialNo').value.trim() || '000';
+            const name = document.getElementById('name').value.trim();
             const aadhaar = document.getElementById('aadhaar').value.trim();
             const editId = document.getElementById('editId').value;
 
-            // Check if Aadhaar is already registered elsewhere
             const existingWithSameAadhaar = aadhaar ? workers.filter(w => w.id !== editId && w.aadhaar === aadhaar) : [];
             const isDuplicateAadhaar = existingWithSameAadhaar.length > 0;
 
@@ -398,9 +470,17 @@
                 showToast(`Note: Duplicate Aadhaar detected (matches Sl No: ${existingWithSameAadhaar.map(w => w.serialNo).join(', ')})`, "error");
             }
 
+            // Retain existing photo/signature if not newly uploaded during edit
+            const existing = editId ? workers.find(w => w.id === editId) : null;
+            if (!base64Photo && existing) base64Photo = existing.photo || "";
+            if (!base64Signature && existing) base64Signature = existing.signature || "";
+
+            const qrText = `SlNo: ${serialNo} | Name: ${name} | Aadhaar: ${aadhaar || 'N/A'} | Agency: ${document.getElementById('agency').value.trim() || 'N/A'}`;
+            const qrCodeBase64 = generateQRCodeBase64(qrText);
+
             const workerData = {
                 serialNo: serialNo,
-                name: document.getElementById('name').value.trim(),
+                name: name,
                 fatherName: document.getElementById('fatherName').value.trim(),
                 designation: document.getElementById('designation').value.trim(),
                 agency: document.getElementById('agency').value.trim(),
@@ -412,6 +492,9 @@
                 permanentAddress: document.getElementById('permanentAddress').value.trim(),
                 presentAddress: document.getElementById('presentAddress').value.trim(),
                 inductionDate: document.getElementById('inductionDate').value,
+                photo: base64Photo,
+                signature: base64Signature,
+                qrCode: qrCodeBase64,
                 isDuplicateAadhaar: isDuplicateAadhaar,
                 updatedAt: new Date().toISOString()
             };
@@ -444,6 +527,15 @@
             document.getElementById('permLastFetched').value = '';
             document.getElementById('presLastFetched').value = '';
             document.getElementById('inductionDate').valueAsDate = new Date();
+            
+            document.getElementById('photoPreview').classList.add('hidden');
+            document.getElementById('photoPreview').src = "";
+            base64Photo = "";
+
+            document.getElementById('sigPreview').classList.add('hidden');
+            document.getElementById('sigPreview').src = "";
+            base64Signature = "";
+
             document.getElementById('formTitle').innerHTML = '<i data-lucide="user-plus" class="w-5 h-5 text-indigo-600"></i> New Induction Entry';
             document.getElementById('resetFormBtn').classList.add('hidden');
             document.getElementById('submitBtn').innerHTML = '<i data-lucide="user-check" class="w-4 h-4"></i> Save Induction Record';
@@ -500,15 +592,24 @@
             document.getElementById('recordCount').innerText = filtered.length;
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400 italic">No worker records found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400 italic">No worker records found.</td></tr>`;
                 return;
             }
 
             filtered.forEach((w) => {
                 const duplicateBadge = w.isDuplicateAadhaar ? `<span class="ml-2 bg-amber-100 text-amber-700 border border-amber-300 px-1.5 py-0.5 rounded text-[10px] font-bold">Duplicate Aadhaar</span>` : '';
+                const photoThumb = w.photo ? `<img src="${w.photo}" class="w-7 h-7 object-cover rounded-md border border-slate-200" title="Photo Attached">` : `<div class="w-7 h-7 bg-slate-200 rounded-md flex items-center justify-center text-[8px] text-slate-500">No Img</div>`;
+                const sigThumb = w.signature ? `<img src="${w.signature}" class="w-9 h-7 object-contain rounded-md border border-slate-200 bg-white" title="Signature Attached">` : '';
+                const qrThumb = w.qrCode ? `<img src="${w.qrCode}" class="w-7 h-7 object-cover rounded-md border border-slate-200" title="QR Code">` : '';
+
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50/80 transition-all border-b border-slate-100';
                 tr.innerHTML = `
+                    <td class="p-3 flex items-center gap-1.5">
+                        ${photoThumb}
+                        ${sigThumb}
+                        ${qrThumb}
+                    </td>
                     <td class="p-3 font-semibold text-indigo-600">${w.serialNo || '-'}${duplicateBadge}</td>
                     <td class="p-3 text-slate-600">${w.inductionDate || '-'}</td>
                     <td class="p-3">
@@ -557,6 +658,24 @@
             document.getElementById('permanentAddress').value = w.permanentAddress || '';
             document.getElementById('presentAddress').value = w.presentAddress || '';
 
+            base64Photo = w.photo || "";
+            if (base64Photo) {
+                const preview = document.getElementById('photoPreview');
+                preview.src = base64Photo;
+                preview.classList.remove('hidden');
+            } else {
+                document.getElementById('photoPreview').classList.add('hidden');
+            }
+
+            base64Signature = w.signature || "";
+            if (base64Signature) {
+                const sigPrev = document.getElementById('sigPreview');
+                sigPrev.src = base64Signature;
+                sigPrev.classList.remove('hidden');
+            } else {
+                document.getElementById('sigPreview').classList.add('hidden');
+            }
+
             document.getElementById('formTitle').innerHTML = '<i data-lucide="user-pen" class="w-5 h-5 text-indigo-600"></i> Edit Worker Record';
             document.getElementById('resetFormBtn').classList.remove('hidden');
             document.getElementById('submitBtn').innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Update Worker Record';
@@ -584,7 +703,10 @@
                 "Phone Number": w.phone || '',
                 "Emergency Contact": w.emergency || '',
                 "Permanent Address": w.permanentAddress || '',
-                "Present Address": w.presentAddress || ''
+                "Present Address": w.presentAddress || '',
+                "Photo Status": w.photo ? "Attached (Base64)" : "None",
+                "Signature Status": w.signature ? "Attached (Base64)" : "None",
+                "QR Code Status": w.qrCode ? "Generated" : "None"
             }));
 
             const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -600,15 +722,15 @@
             });
             worksheet['!cols'] = colWidths.map(w => ({ wch: Math.min(w, 45) }));
 
-            // Set comfortable row heights (Taller header row, optimal data row height)
-            const rowHeights = [{ hpt: 30 }]; // Header row height
-            exportData.forEach(() => rowHeights.push({ hpt: 24 })); // Data rows height
+            // Row heights configuration
+            const rowHeights = [{ hpt: 30 }];
+            exportData.forEach(() => rowHeights.push({ hpt: 28 }));
             worksheet['!rows'] = rowHeights;
 
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Worker Inductions");
             XLSX.writeFile(workbook, "Worker_Induction_Register.xlsx");
-            showToast("Excel file downloaded successfully!");
+            showToast("Excel file downloaded successfully with complete records!");
         }
     </script>
 </body>
