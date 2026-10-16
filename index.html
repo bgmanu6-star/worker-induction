@@ -129,7 +129,8 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Agency / Contractor *</label>
-                            <input type="text" id="agency" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Agency name">
+                            <input type="text" id="agency" list="agencySuggestions" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Agency name">
+                            <datalist id="agencySuggestions"></datalist>
                         </div>
                     </div>
 
@@ -185,7 +186,7 @@
                         <input type="text" id="presentAddress" list="addressSuggestions" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Type street, landmark or enter PIN...">
                     </div>
 
-                    <!-- Autocomplete suggestion datalist for addresses -->
+                    <!-- Autocomplete suggestion datalists -->
                     <datalist id="addressSuggestions"></datalist>
 
                     <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg text-sm transition-all shadow-md shadow-indigo-100 flex items-center justify-center gap-2">
@@ -266,7 +267,7 @@
                 });
                 renderTable();
                 updateStats();
-                updateAddressSuggestions();
+                updateSuggestions();
                 setAutoSerialNo();
             }, (error) => {
                 console.error("Firestore Error: ", error);
@@ -274,14 +275,15 @@
             });
         });
 
-        function updateAddressSuggestions() {
+        function updateSuggestions() {
             const allAddresses = [...new Set([
                 ...workers.map(w => w.permanentAddress),
                 ...workers.map(w => w.presentAddress)
             ])].filter(Boolean);
+            document.getElementById('addressSuggestions').innerHTML = allAddresses.map(addr => `<option value="${addr}">`).join('');
 
-            const datalist = document.getElementById('addressSuggestions');
-            datalist.innerHTML = allAddresses.map(addr => `<option value="${addr}">`).join('');
+            const allAgencies = [...new Set(workers.map(w => w.agency ? w.agency.trim() : ''))].filter(Boolean);
+            document.getElementById('agencySuggestions').innerHTML = allAgencies.map(ag => `<option value="${ag}">`).join('');
         }
 
         async function handlePincodeInput(pincode, targetFieldId, lastFetchedId) {
@@ -371,13 +373,13 @@
         function copyAddress() {
             const isChecked = document.getElementById('sameAddress').checked;
             if (isChecked) {
-                document.getElementById('permanentAddress').value = document.getElementById('presentAddress').value;
-                document.getElementById('permPincode').value = document.getElementById('presPincode').value;
-                document.getElementById('permLastFetched').value = document.getElementById('presLastFetched').value;
+                document.getElementById('presentAddress').value = document.getElementById('permanentAddress').value;
+                document.getElementById('presPincode').value = document.getElementById('permPincode').value;
+                document.getElementById('presLastFetched').value = document.getElementById('permLastFetched').value;
             } else {
-                document.getElementById('permanentAddress').value = '';
-                document.getElementById('permPincode').value = '';
-                document.getElementById('permLastFetched').value = '';
+                document.getElementById('presentAddress').value = '';
+                document.getElementById('presPincode').value = '';
+                document.getElementById('presLastFetched').value = '';
             }
         }
 
@@ -388,7 +390,6 @@
             const aadhaar = document.getElementById('aadhaar').value.trim();
             const editId = document.getElementById('editId').value;
 
-            // Check duplicate Aadhaar and identify the exact matching worker
             const duplicate = workers.find(w => w.id !== editId && w.aadhaar === aadhaar);
             if (duplicate) {
                 showToast(`Aadhaar already registered! Matches Sl No: ${duplicate.serialNo} (${duplicate.name})`, "error");
@@ -450,21 +451,31 @@
         function updateStats() {
             document.getElementById('statTotalWorkers').innerText = workers.length;
             
-            const agencies = [...new Set(workers.map(w => w.agency))];
-            document.getElementById('statTotalAgencies').innerText = agencies.length;
+            const normalizedAgenciesMap = {};
+            workers.forEach(w => {
+                if (!w.agency) return;
+                const cleanName = w.agency.trim();
+                const lowerKey = cleanName.toLowerCase();
+                if (!normalizedAgenciesMap[lowerKey]) {
+                    normalizedAgenciesMap[lowerKey] = cleanName;
+                }
+            });
+
+            const uniqueAgencies = Object.values(normalizedAgenciesMap);
+            document.getElementById('statTotalAgencies').innerText = uniqueAgencies.length;
 
             const breakdownList = document.getElementById('agencyBreakdownList');
-            if (agencies.length === 0) {
+            if (uniqueAgencies.length === 0) {
                 breakdownList.innerHTML = '<span class="text-sm text-slate-400 italic">No workers registered yet.</span>';
                 return;
             }
 
             breakdownList.innerHTML = '';
-            agencies.forEach(agency => {
-                const count = workers.filter(w => w.agency === agency).length;
+            uniqueAgencies.forEach(agencyName => {
+                const count = workers.filter(w => w.agency && w.agency.trim().toLowerCase() === agencyName.toLowerCase()).length;
                 const badge = document.createElement('div');
                 badge.className = 'bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 flex items-center gap-2';
-                badge.innerHTML = `<span>${agency}</span> <span class="bg-indigo-600 text-white px-2 py-0.5 rounded-full text-[10px]">${count}</span>`;
+                badge.innerHTML = `<span>${agencyName}</span> <span class="bg-indigo-600 text-white px-2 py-0.5 rounded-full text-[10px]">${count}</span>`;
                 breakdownList.appendChild(badge);
             });
         }
