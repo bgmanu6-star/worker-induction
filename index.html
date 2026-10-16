@@ -554,7 +554,7 @@
             document.getElementById('presentAddress').value = w.presentAddress || '';
 
             document.getElementById('formTitle').innerHTML = '<i data-lucide="user-pen" class="w-5 h-5 text-indigo-600"></i> Edit Worker Record';
-            document.getElementById('resetFormBtn').classList.remove('hidden');
+            document.getElementById('resetFormBtn').classList.add('hidden');
             document.getElementById('submitBtn').innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Update Worker Record';
             window.scrollTo({ top: 0, behavior: 'smooth' });
             lucide.createIcons();
@@ -565,6 +565,7 @@
                 showToast("No records available to export", "error");
                 return;
             }
+
             const exportData = workers.map(w => ({
                 "Serial No": w.serialNo,
                 "Induction Date": w.inductionDate,
@@ -580,7 +581,20 @@
                 "Permanent Address": w.permanentAddress,
                 "Present Address": w.presentAddress
             }));
+
             const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+            // Auto-fit column widths so all text is fully visible without being clipped
+            const colWidths = [];
+            exportData.forEach(row => {
+                Object.keys(row).forEach((key, i) => {
+                    const val = String(row[key] || '');
+                    const len = Math.max(val.length, key.length);
+                    colWidths[i] = Math.max(colWidths[i] || 10, len + 3);
+                });
+            });
+            worksheet['!cols'] = colWidths.map(w => ({ wch: Math.min(w, 45) })); // Max cap width to look clean
+
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Worker Inductions");
             XLSX.writeFile(workbook, "Worker_Induction_Register.xlsx");
