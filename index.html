@@ -6,8 +6,10 @@
     <title>Worker Induction Register</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SheetJS for Excel Export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- SheetJS with Style Support (xlsx-js-style) for Colors & Text Wrapping -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <!-- Tesseract.js for Free On-Device OCR (Proof Auto-Fill) -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <!-- Firebase App & Firestore SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -38,16 +40,58 @@
                     </p>
                 </div>
             </div>
-            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-                <div id="connectionStatus" class="bg-emerald-500/20 text-emerald-100 border border-emerald-400/30 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Connected Live
-                </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+                <button onclick="toggleSettingsModal()" class="bg-indigo-600 hover:bg-indigo-500 border border-indigo-400/30 text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all">
+                    <i data-lucide="settings" class="w-4 h-4"></i> Telegram / Img Host Setup
+                </button>
                 <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all shadow-sm">
-                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Export Excel
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Export Styled Excel
                 </button>
             </div>
         </div>
     </header>
+
+    <!-- Settings Modal for Telegram & ImgBB -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="send" class="w-5 h-5 text-indigo-600"></i> Telegram & Free Image Host Setup
+                </h3>
+                <button onclick="toggleSettingsModal()" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Telegram Bot Token (For Original Proofs)</label>
+                    <input type="text" id="cfgBotToken" placeholder="e.g. 123456:ABC-DEF..." class="w-full px-3 py-2 border rounded-lg bg-slate-50 font-mono">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Telegram Channel/Group Chat ID</label>
+                    <input type="text" id="cfgChatId" placeholder="e.g. -1001987654321" class="w-full px-3 py-2 border rounded-lg bg-slate-50 font-mono">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">ImgBB Free API Key (For Clickable Full Image Links)</label>
+                    <input type="text" id="cfgImgbbKey" placeholder="Get free key at api.imgbb.com" class="w-full px-3 py-2 border rounded-lg bg-slate-50 font-mono">
+                    <p class="text-[11px] text-slate-400 mt-1">If ImgBB key is provided, clicking any thumbnail in the App or Excel opens the full HD image directly in the browser!</p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="saveSettings()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-xs font-semibold">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox Modal (When clicking thumbnails in App) -->
+    <div id="imageModal" onclick="this.classList.add('hidden')" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 cursor-zoom-out">
+        <div class="max-w-3xl max-h-[90vh] bg-white p-2 rounded-2xl shadow-2xl overflow-hidden flex flex-col items-center">
+            <img id="modalFullImage" src="" class="max-h-[80vh] w-auto object-contain rounded-xl" alt="Full View">
+            <a id="modalExternalLink" href="#" target="_blank" class="mt-2 text-xs text-indigo-600 font-semibold hover:underline flex items-center gap-1">
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Open Original High-Res Image
+            </a>
+        </div>
+    </div>
 
     <!-- Main Content Container -->
     <main class="max-w-7xl mx-auto px-4 mt-6 space-y-6">
@@ -89,11 +133,37 @@
             
             <!-- Form Column -->
             <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
-                <div class="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                     <h2 id="formTitle" class="text-base font-bold text-slate-800 flex items-center gap-2">
                         <i data-lucide="user-plus" class="w-5 h-5 text-indigo-600"></i> New Induction Entry
                     </h2>
                     <button type="button" id="resetFormBtn" onclick="resetForm()" class="hidden text-xs text-rose-600 hover:underline font-medium">Cancel Edit</button>
+                </div>
+
+                <!-- Smart Proof Entry (OCR Auto-Fill + Proof Upload) -->
+                <div class="mb-5 bg-indigo-50/70 border border-indigo-200 rounded-xl p-3.5 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
+                            <i data-lucide="scan-line" class="w-4 h-4 text-indigo-600"></i> Smart Proof Entry (Auto-Fill)
+                        </span>
+                        <span id="ocrStatus" class="text-[10px] font-semibold text-indigo-600 hidden animate-pulse">Scanning ID...</span>
+                    </div>
+                    <p class="text-[11px] text-indigo-700 leading-tight">Upload or snap ID Proof (Front & Back). The app will scan details automatically and save the original proof to Telegram!</p>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="cursor-pointer bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg p-2 flex flex-col items-center justify-center text-center transition-all">
+                            <i data-lucide="id-card" class="w-4 h-4 text-indigo-600 mb-1"></i>
+                            <span class="text-[10px] font-semibold text-slate-700">ID Proof Front</span>
+                            <input type="file" id="proofFrontInput" accept="image/*" capture="environment" onchange="handleProofUpload(event, 'front')" class="hidden">
+                            <img id="proofFrontPreview" class="w-12 h-8 object-cover rounded mt-1 hidden border">
+                        </label>
+                        <label class="cursor-pointer bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg p-2 flex flex-col items-center justify-center text-center transition-all">
+                            <i data-lucide="file-text" class="w-4 h-4 text-indigo-600 mb-1"></i>
+                            <span class="text-[10px] font-semibold text-slate-700">ID Proof Back</span>
+                            <input type="file" id="proofBackInput" accept="image/*" capture="environment" onchange="handleProofUpload(event, 'back')" class="hidden">
+                            <img id="proofBackPreview" class="w-12 h-8 object-cover rounded mt-1 hidden border">
+                        </label>
+                    </div>
                 </div>
 
                 <form id="inductionForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
@@ -143,7 +213,7 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Date of Birth</label>
-                            <input type="text" id="dob" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'" onchange="calculateAge()" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Type or pick DOB">
+                            <input type="text" id="dob" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'" onchange="calculateAge()" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="YYYY-MM-DD or pick">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Calculated Age</label>
@@ -153,7 +223,7 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Aadhaar Card Number</label>
-                        <input type="text" id="aadhaar" maxlength="14" placeholder="1234 5678 9012" oninput="formatAadhaar(this)" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all">
+                        <input type="text" id="aadhaar" maxlength="14" placeholder="12-digit ID number" oninput="formatAadhaar(this)" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
@@ -192,21 +262,17 @@
                         <input type="text" id="presentAddress" list="addressSuggestions" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Type street, landmark or enter PIN...">
                     </div>
 
-                    <!-- Photo Upload Section (Optional) -->
-                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
-                        <label class="block text-xs font-semibold text-slate-600">Worker Photo <span class="text-slate-400 font-normal">(Optional)</span></label>
-                        <div class="flex items-center gap-3">
-                            <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="previewImage(event, 'photoPreview', 'base64Photo')" class="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
-                            <img id="photoPreview" class="w-12 h-12 object-cover rounded-lg border border-slate-300 hidden" alt="Preview">
+                    <!-- Optional Worker Photo & Signature Image Upload -->
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Worker Photo <span class="text-slate-400 font-normal">(Optional)</span></label>
+                            <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="handleMediaSelect(event, 'photoPreview')" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-indigo-50 file:text-indigo-700">
+                            <img id="photoPreview" class="w-10 h-10 object-cover rounded mt-1.5 hidden border">
                         </div>
-                    </div>
-
-                    <!-- Signature Image Upload Section (Optional) -->
-                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
-                        <label class="block text-xs font-semibold text-slate-600">Worker Signature Image <span class="text-slate-400 font-normal">(Optional)</span></label>
-                        <div class="flex items-center gap-3">
-                            <input type="file" id="signatureInput" accept="image/*" onchange="previewImage(event, 'sigPreview', 'base64Signature')" class="text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
-                            <img id="sigPreview" class="w-16 h-10 object-contain rounded-lg border border-slate-300 bg-white hidden" alt="Signature Preview">
+                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Signature Img <span class="text-slate-400 font-normal">(Optional)</span></label>
+                            <input type="file" id="sigInput" accept="image/*" onchange="handleMediaSelect(event, 'sigPreview')" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-indigo-50 file:text-indigo-700">
+                            <img id="sigPreview" class="w-14 h-10 object-contain bg-white rounded mt-1.5 hidden border">
                         </div>
                     </div>
 
@@ -226,7 +292,7 @@
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
                             <i data-lucide="search" class="w-4 h-4"></i>
                         </span>
-                        <input type="text" id="searchInput" oninput="renderTable()" placeholder="Search worker name, Aadhaar, agency..." class="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all">
+                        <input type="text" id="searchInput" oninput="renderTable()" placeholder="Search worker name, ID, agency..." class="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all">
                     </div>
                     <div class="text-xs font-medium text-slate-500">
                         Showing <span id="recordCount">0</span> records
@@ -235,17 +301,17 @@
 
                 <!-- Table Container -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div class="overflow-x-auto max-h-[600px]" id="tableContainer">
+                    <div class="overflow-x-auto max-h-[650px]" id="tableContainer">
                         <table class="w-full text-left border-collapse text-xs">
                             <thead class="bg-slate-100 text-slate-600 uppercase font-semibold sticky top-0 z-10 border-b border-slate-200">
                                 <tr>
-                                    <th class="p-3">Media / QR</th>
+                                    <th class="p-3">Thumbnails & QR</th>
                                     <th class="p-3">Sl No</th>
                                     <th class="p-3">Induction Date</th>
                                     <th class="p-3">Worker Details</th>
                                     <th class="p-3">Designation / Agency</th>
                                     <th class="p-3">Age / DOB</th>
-                                    <th class="p-3">Aadhaar & Contact</th>
+                                    <th class="p-3">ID & Contact</th>
                                     <th class="p-3 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -280,11 +346,18 @@
         const db = firebase.firestore();
 
         let workers = [];
-        let base64Photo = "";
-        let base64Signature = "";
+
+        // Temporary file holders for current form entry
+        let selectedFiles = {
+            proofFront: null,
+            proofBack: null,
+            photo: null,
+            sig: null
+        };
 
         window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('inductionDate').valueAsDate = new Date();
+            loadSavedSettings();
             lucide.createIcons();
             
             db.collection("workers").orderBy("serialNo", "asc").onSnapshot((snapshot) => {
@@ -302,20 +375,201 @@
             });
         });
 
-        // --- IMAGE PREVIEW HELPER ---
-        function previewImage(event, previewId, targetVarName) {
+        // --- SETTINGS MODAL (TELEGRAM & IMGBB) ---
+        function toggleSettingsModal() {
+            document.getElementById('settingsModal').classList.toggle('hidden');
+        }
+
+        function loadSavedSettings() {
+            document.getElementById('cfgBotToken').value = localStorage.getItem('tg_bot_token') || '';
+            document.getElementById('cfgChatId').value = localStorage.getItem('tg_chat_id') || '';
+            document.getElementById('cfgImgbbKey').value = localStorage.getItem('imgbb_api_key') || '';
+        }
+
+        function saveSettings() {
+            localStorage.setItem('tg_bot_token', document.getElementById('cfgBotToken').value.trim());
+            localStorage.setItem('tg_chat_id', document.getElementById('cfgChatId').value.trim());
+            localStorage.setItem('imgbb_api_key', document.getElementById('cfgImgbbKey').value.trim());
+            toggleSettingsModal();
+            showToast("Telegram & Image Host settings saved!");
+        }
+
+        // --- ULTRA-LIGHTWEIGHT THUMBNAIL GENERATOR (~2KB) ---
+        function createTinyThumbnail(file, maxWidth = 60, maxHeight = 60) {
+            return new Promise((resolve) => {
+                if (!file) return resolve("");
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width, h = img.height;
+                        if (w > h) { if (w > maxWidth) { h *= maxWidth / w; w = maxWidth; } }
+                        else { if (h > maxHeight) { w *= maxHeight / h; h = maxHeight; } }
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL('image/jpeg', 0.6));
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // --- FREE IMAGE HOST UPLOAD (IMGBB) FOR CLICKABLE FULL IMAGE ---
+        async function uploadToFreeImageHost(file) {
+            const apiKey = localStorage.getItem('imgbb_api_key');
+            if (!apiKey || !file) return "";
+            try {
+                const formData = new FormData();
+                formData.append("image", file);
+                const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await res.json();
+                if (data && data.success) {
+                    return data.data.url; // Direct full-resolution URL
+                }
+            } catch (err) {
+                console.error("ImgBB Upload Error:", err);
+            }
+            return "";
+        }
+
+        // --- TELEGRAM ORIGINAL PROOF UPLOAD ---
+        async function uploadToTelegram(file, caption) {
+            const botToken = localStorage.getItem('tg_bot_token');
+            const chatId = localStorage.getItem('tg_chat_id');
+            if (!botToken || !chatId || !file) return "";
+
+            try {
+                const formData = new FormData();
+                formData.append("chat_id", chatId);
+                formData.append("photo", file);
+                formData.append("caption", caption);
+
+                const res = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await res.json();
+                if (data && data.ok) {
+                    const cleanChatId = String(chatId).replace("-100", "");
+                    return `https://t.me/c/${cleanChatId}/${data.result.message_id}`;
+                }
+            } catch (err) {
+                console.error("Telegram Upload Error:", err);
+            }
+            return "";
+        }
+
+        // --- SMART PROOF OCR AUTO-FILL (TESSERACT.JS) ---
+        async function handleProofUpload(event, side) {
             const file = event.target.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                if (targetVarName === 'base64Photo') base64Photo = e.target.result;
-                if (targetVarName === 'base64Signature') base64Signature = e.target.result;
 
-                const preview = document.getElementById(previewId);
-                preview.src = e.target.result;
-                preview.classList.remove('hidden');
+            if (side === 'front') {
+                selectedFiles.proofFront = file;
+                const prev = document.getElementById('proofFrontPreview');
+                prev.src = URL.createObjectURL(file);
+                prev.classList.remove('hidden');
+            } else {
+                selectedFiles.proofBack = file;
+                const prev = document.getElementById('proofBackPreview');
+                prev.src = URL.createObjectURL(file);
+                prev.classList.remove('hidden');
             }
-            reader.readAsDataURL(file);
+
+            // Run OCR to auto-fill fields
+            const ocrStatus = document.getElementById('ocrStatus');
+            ocrStatus.classList.remove('hidden');
+            showToast(`Scanning ID ${side} for auto-fill...`);
+
+            try {
+                const result = await Tesseract.recognize(file, 'eng');
+                const text = result.data.text;
+                parseOcrTextToForm(text, side);
+                showToast("Proof scanned & fields auto-filled!");
+            } catch (err) {
+                console.error("OCR Error:", err);
+                showToast("Could not auto-read text, please verify manually.", "error");
+            } finally {
+                ocrStatus.classList.add('hidden');
+            }
+        }
+
+        function parseOcrTextToForm(rawText, side) {
+            const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 2);
+
+            // 1. Look for 12-digit ID pattern (XXXX XXXX XXXX)
+            const idMatch = rawText.match(/\b\d{4}\s?\d{4}\s?\d{4}\b/);
+            if (idMatch && !document.getElementById('aadhaar').value) {
+                const digits = idMatch[0].replace(/\D/g, '');
+                document.getElementById('aadhaar').value = digits.match(/.{1,4}/g).join(' ');
+            }
+
+            // 2. Look for DOB (DD/MM/YYYY or YYYY)
+            const dobMatch = rawText.match(/\b(\d{2})[\/\-](\d{2})[\/\-](\d{4})\b/);
+            if (dobMatch && !document.getElementById('dob').value) {
+                const yyyy = dobMatch[3], mm = dobMatch[2], dd = dobMatch[1];
+                document.getElementById('dob').value = `${yyyy}-${mm}-${dd}`;
+                calculateAge();
+            }
+
+            // 3. Look for 6-digit PIN code (especially on back side)
+            const pinMatch = rawText.match(/\b[654321]\d{5}\b/);
+            if (pinMatch && !document.getElementById('permPincode').value) {
+                const pin = pinMatch[0];
+                document.getElementById('permPincode').value = pin;
+                handlePincodeInput(pin, 'permanentAddress', 'permLastFetched');
+            }
+
+            // 4. Look for Father's Name (S/O, C/O, W/O, Father)
+            const fatherRegex = /(?:S\/O|C\/O|W\/O|D\/O|Father)\s*[:\-]?\s*([A-Za-z\s\.]+)/i;
+            const fatherMatch = rawText.match(fatherRegex);
+            if (fatherMatch && fatherMatch[1] && !document.getElementById('fatherName').value) {
+                document.getElementById('fatherName').value = fatherMatch[1].split('\n')[0].trim();
+            }
+
+            // 5. Try to extract Name on front side (line right above DOB or Father's name)
+            if (side === 'front' && !document.getElementById('name').value) {
+                for (let i = 0; i < lines.length; i++) {
+                    if (/DOB|Year of Birth|Male|Female/i.test(lines[i]) && i > 0) {
+                        const candidate = lines[i - 1].replace(/[^a-zA-Z\s\.]/g, '').trim();
+                        if (candidate.length > 3 && !/Government|India|Authority/i.test(candidate)) {
+                            document.getElementById('name').value = candidate;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        function handleMediaSelect(event, previewId) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (previewId === 'photoPreview') selectedFiles.photo = file;
+            if (previewId === 'sigPreview') selectedFiles.sig = file;
+            const prev = document.getElementById(previewId);
+            prev.src = URL.createObjectURL(file);
+            prev.classList.remove('hidden');
+        }
+
+        function openFullImageModal(thumbSrc, fullUrl) {
+            const modal = document.getElementById('imageModal');
+            const img = document.getElementById('modalFullImage');
+            const link = document.getElementById('modalExternalLink');
+            img.src = fullUrl && fullUrl.startsWith('http') && !fullUrl.includes('t.me/') ? fullUrl : thumbSrc;
+            if (fullUrl) {
+                link.href = fullUrl;
+                link.classList.remove('hidden');
+            } else {
+                link.classList.add('hidden');
+            }
+            modal.classList.remove('hidden');
         }
 
         // --- QR CODE GENERATOR ---
@@ -324,8 +578,8 @@
                 const qr = qrcode(0, 'M');
                 qr.addData(text);
                 qr.make();
-                const cellSize = 4;
-                const margin = 8;
+                const cellSize = 3;
+                const margin = 6;
                 const size = qr.getModuleCount() * cellSize + margin * 2;
                 const qrCanvas = document.createElement('canvas');
                 qrCanvas.width = size;
@@ -376,22 +630,13 @@
                 const data = await response.json();
                 if (data[0].Status === "Success") {
                     const postOffice = data[0].PostOffice[0];
-                    const area = postOffice.Name;
-                    const district = postOffice.District;
-                    const state = postOffice.State;
-                    const fetchedString = `${area}, ${district}, ${state} - ${pincode}`;
+                    const fetchedString = `${postOffice.Name}, ${postOffice.District}, ${postOffice.State} - ${pincode}`;
                     
                     if (lastFetchedInput.value) {
                         currentVal = currentVal.replace(new RegExp(',?\\s*' + lastFetchedInput.value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '$'), '').trim();
                     }
-
                     lastFetchedInput.value = fetchedString;
-
-                    if (currentVal) {
-                        inputField.value = `${currentVal}, ${fetchedString}`;
-                    } else {
-                        inputField.value = fetchedString;
-                    }
+                    inputField.value = currentVal ? `${currentVal}, ${fetchedString}` : fetchedString;
                     showToast("PIN code area loaded!");
                 } else {
                     showToast("Invalid PIN code", "error");
@@ -406,11 +651,8 @@
             let nextNum = 1;
             if (workers.length > 0) {
                 const nums = workers.map(w => parseInt(w.serialNo)).filter(n => !isNaN(n));
-                if (nums.length > 0) {
-                    nextNum = Math.max(...nums) + 1;
-                } else {
-                    nextNum = workers.length + 1;
-                }
+                if (nums.length > 0) nextNum = Math.max(...nums) + 1;
+                else nextNum = workers.length + 1;
             }
             document.getElementById('serialNo').value = String(nextNum).padStart(3, '0');
         }
@@ -422,7 +664,7 @@
             icon.innerHTML = type === 'success' ? '<i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>' : '<i data-lucide="alert-circle" class="w-5 h-5 text-rose-400"></i>';
             lucide.createIcons();
             toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => { toast.classList.add('translate-y-20', 'opacity-0'); }, 3000);
+            setTimeout(() => { toast.classList.add('translate-y-20', 'opacity-0'); }, 3500);
         }
 
         function formatAadhaar(input) {
@@ -435,6 +677,7 @@
             const dobVal = document.getElementById('dob').value;
             if (!dobVal) { document.getElementById('age').value = ''; return; }
             const dobDate = new Date(dobVal);
+            if (isNaN(dobDate)) return;
             const today = new Date();
             let age = today.getFullYear() - dobDate.getFullYear();
             const m = today.getMonth() - dobDate.getMonth();
@@ -455,27 +698,61 @@
             }
         }
 
+        // Check if an Aadhaar number has duplicates across the entire workers array
+        function isAadhaarDuplicated(aadhaarStr) {
+            if (!aadhaarStr) return false;
+            const clean = aadhaarStr.trim();
+            if (!clean) return false;
+            return workers.filter(w => (w.aadhaar || '').trim() === clean).length > 1;
+        }
+
         async function handleFormSubmit(event) {
             event.preventDefault();
 
             const serialNo = document.getElementById('serialNo').value.trim() || '000';
             const name = document.getElementById('name').value.trim();
             const aadhaar = document.getElementById('aadhaar').value.trim();
+            const agency = document.getElementById('agency').value.trim();
             const editId = document.getElementById('editId').value;
 
-            const existingWithSameAadhaar = aadhaar ? workers.filter(w => w.id !== editId && w.aadhaar === aadhaar) : [];
+            const existingWithSameAadhaar = aadhaar ? workers.filter(w => w.id !== editId && (w.aadhaar || '').trim() === aadhaar) : [];
             const isDuplicateAadhaar = existingWithSameAadhaar.length > 0;
 
             if (isDuplicateAadhaar) {
-                showToast(`Note: Duplicate Aadhaar detected (matches Sl No: ${existingWithSameAadhaar.map(w => w.serialNo).join(', ')})`, "error");
+                showToast(`Duplicate ID detected! Matches Sl No: ${existingWithSameAadhaar.map(w => w.serialNo).join(', ')}`, "error");
             }
 
-            // Retain existing photo/signature if not newly uploaded during edit
-            const existing = editId ? workers.find(w => w.id === editId) : null;
-            if (!base64Photo && existing) base64Photo = existing.photo || "";
-            if (!base64Signature && existing) base64Signature = existing.signature || "";
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Uploading Media & Saving...';
+            lucide.createIcons();
 
-            const qrText = `SlNo: ${serialNo} | Name: ${name} | Aadhaar: ${aadhaar || 'N/A'} | Agency: ${document.getElementById('agency').value.trim() || 'N/A'}`;
+            const existing = editId ? workers.find(w => w.id === editId) : {};
+            const baseCaption = `Sl No: ${serialNo} | Name: ${name} | Agency: ${agency || 'N/A'}`;
+
+            // Generate tiny thumbnails (~2KB) & upload originals to Telegram / ImgBB
+            const photoThumb = selectedFiles.photo ? await createTinyThumbnail(selectedFiles.photo) : (existing.photoThumb || "");
+            const sigThumb = selectedFiles.sig ? await createTinyThumbnail(selectedFiles.sig, 80, 40) : (existing.sigThumb || "");
+            const proofFrontThumb = selectedFiles.proofFront ? await createTinyThumbnail(selectedFiles.proofFront) : (existing.proofFrontThumb || "");
+            const proofBackThumb = selectedFiles.proofBack ? await createTinyThumbnail(selectedFiles.proofBack) : (existing.proofBackThumb || "");
+
+            // Upload originals to Telegram & Free Host in parallel
+            const [
+                tgPhotoLink, hostPhotoLink,
+                tgSigLink, hostSigLink,
+                tgProofFront, hostProofFront,
+                tgProofBack, hostProofBack
+            ] = await Promise.all([
+                uploadToTelegram(selectedFiles.photo, `${baseCaption} - Worker Photo`),
+                uploadToFreeImageHost(selectedFiles.photo),
+                uploadToTelegram(selectedFiles.sig, `${baseCaption} - Signature`),
+                uploadToFreeImageHost(selectedFiles.sig),
+                uploadToTelegram(selectedFiles.proofFront, `${baseCaption} - ID Proof Front`),
+                uploadToFreeImageHost(selectedFiles.proofFront),
+                uploadToTelegram(selectedFiles.proofBack, `${baseCaption} - ID Proof Back`),
+                uploadToFreeImageHost(selectedFiles.proofBack)
+            ]);
+
+            const qrText = `SlNo:${serialNo}|Name:${name}|Agency:${agency || 'NA'}`;
             const qrCodeBase64 = generateQRCodeBase64(qrText);
 
             const workerData = {
@@ -483,7 +760,7 @@
                 name: name,
                 fatherName: document.getElementById('fatherName').value.trim(),
                 designation: document.getElementById('designation').value.trim(),
-                agency: document.getElementById('agency').value.trim(),
+                agency: agency,
                 dob: document.getElementById('dob').value,
                 age: document.getElementById('age').value,
                 aadhaar: aadhaar,
@@ -492,24 +769,26 @@
                 permanentAddress: document.getElementById('permanentAddress').value.trim(),
                 presentAddress: document.getElementById('presentAddress').value.trim(),
                 inductionDate: document.getElementById('inductionDate').value,
-                photo: base64Photo,
-                signature: base64Signature,
+                photoThumb: photoThumb,
+                sigThumb: sigThumb,
+                proofFrontThumb: proofFrontThumb,
+                proofBackThumb: proofBackThumb,
+                photoFullUrl: hostPhotoLink || tgPhotoLink || existing.photoFullUrl || "",
+                sigFullUrl: hostSigLink || tgSigLink || existing.sigFullUrl || "",
+                proofFrontUrl: hostProofFront || tgProofFront || existing.proofFrontUrl || "",
+                proofBackUrl: hostProofBack || tgProofBack || existing.proofBackUrl || "",
                 qrCode: qrCodeBase64,
                 isDuplicateAadhaar: isDuplicateAadhaar,
                 updatedAt: new Date().toISOString()
             };
 
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Saving to Cloud...';
-            lucide.createIcons();
-
             try {
                 if (editId) {
                     await db.collection("workers").doc(editId).update(workerData);
-                    showToast("Worker updated in cloud successfully!");
+                    showToast("Worker updated successfully!");
                 } else {
                     await db.collection("workers").add(workerData);
-                    showToast("Worker saved to cloud successfully!");
+                    showToast("Worker & Proofs saved successfully!");
                 }
                 resetForm();
             } catch (error) {
@@ -528,13 +807,12 @@
             document.getElementById('presLastFetched').value = '';
             document.getElementById('inductionDate').valueAsDate = new Date();
             
-            document.getElementById('photoPreview').classList.add('hidden');
-            document.getElementById('photoPreview').src = "";
-            base64Photo = "";
-
-            document.getElementById('sigPreview').classList.add('hidden');
-            document.getElementById('sigPreview').src = "";
-            base64Signature = "";
+            ['photoPreview', 'sigPreview', 'proofFrontPreview', 'proofBackPreview'].forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.add('hidden');
+                el.src = '';
+            });
+            selectedFiles = { proofFront: null, proofBack: null, photo: null, sig: null };
 
             document.getElementById('formTitle').innerHTML = '<i data-lucide="user-plus" class="w-5 h-5 text-indigo-600"></i> New Induction Entry';
             document.getElementById('resetFormBtn').classList.add('hidden');
@@ -597,24 +875,33 @@
             }
 
             filtered.forEach((w) => {
-                const duplicateBadge = w.isDuplicateAadhaar ? `<span class="ml-2 bg-amber-100 text-amber-700 border border-amber-300 px-1.5 py-0.5 rounded text-[10px] font-bold">Duplicate Aadhaar</span>` : '';
-                const photoThumb = w.photo ? `<img src="${w.photo}" class="w-7 h-7 object-cover rounded-md border border-slate-200" title="Photo Attached">` : `<div class="w-7 h-7 bg-slate-200 rounded-md flex items-center justify-center text-[8px] text-slate-500">No Img</div>`;
-                const sigThumb = w.signature ? `<img src="${w.signature}" class="w-9 h-7 object-contain rounded-md border border-slate-200 bg-white" title="Signature Attached">` : '';
-                const qrThumb = w.qrCode ? `<img src="${w.qrCode}" class="w-7 h-7 object-cover rounded-md border border-slate-200" title="QR Code">` : '';
+                const isDup = w.isDuplicateAadhaar || isAadhaarDuplicated(w.aadhaar);
+                const duplicateBadge = isDup ? `<span class="ml-1.5 bg-amber-200 text-amber-900 border border-amber-400 px-1.5 py-0.5 rounded text-[10px] font-bold">Duplicate ID</span>` : '';
+
+                const makeThumb = (thumb, fullUrl, label) => {
+                    if (!thumb) return '';
+                    return `<img src="${thumb}" onclick="openFullImageModal('${thumb}', '${fullUrl || ''}')" class="w-8 h-8 object-cover rounded border border-indigo-200 cursor-pointer hover:scale-110 transition-transform" title="Click to view full ${label}">`;
+                };
+
+                const photoEl = makeThumb(w.photoThumb, w.photoFullUrl, 'Photo');
+                const sigEl = makeThumb(w.sigThumb, w.sigFullUrl, 'Signature');
+                const proofFEl = makeThumb(w.proofFrontThumb, w.proofFrontUrl, 'ID Proof Front');
+                const proofBEl = makeThumb(w.proofBackThumb, w.proofBackUrl, 'ID Proof Back');
+                const qrEl = w.qrCode ? `<img src="${w.qrCode}" onclick="openFullImageModal('${w.qrCode}', '')" class="w-8 h-8 object-cover rounded border border-slate-200 cursor-pointer" title="Click to enlarge QR">` : '';
 
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50/80 transition-all border-b border-slate-100';
+                tr.className = isDup ? 'bg-amber-50/90 hover:bg-amber-100/80 transition-all border-b border-amber-200' : 'hover:bg-slate-50/80 transition-all border-b border-slate-100';
                 tr.innerHTML = `
-                    <td class="p-3 flex items-center gap-1.5">
-                        ${photoThumb}
-                        ${sigThumb}
-                        ${qrThumb}
+                    <td class="p-3">
+                        <div class="flex items-center gap-1 flex-wrap max-w-[140px]">
+                            ${photoEl}${sigEl}${proofFEl}${proofBEl}${qrEl}
+                        </div>
                     </td>
                     <td class="p-3 font-semibold text-indigo-600">${w.serialNo || '-'}${duplicateBadge}</td>
                     <td class="p-3 text-slate-600">${w.inductionDate || '-'}</td>
                     <td class="p-3">
                         <p class="font-bold text-slate-800">${w.name || '-'}</p>
-                        <p class="text-[11px] text-slate-400">S/o: ${w.fatherName || '-'}</p>
+                        <p class="text-[11px] text-slate-500">S/o: ${w.fatherName || '-'}</p>
                     </td>
                     <td class="p-3">
                         <p class="font-semibold text-slate-700">${w.designation || '-'}</p>
@@ -622,14 +909,14 @@
                     </td>
                     <td class="p-3">
                         <p class="font-semibold text-slate-800">${w.age || '-'}</p>
-                        <p class="text-[11px] text-slate-400">DOB: ${w.dob || '-'}</p>
+                        <p class="text-[11px] text-slate-500">DOB: ${w.dob || '-'}</p>
                     </td>
                     <td class="p-3">
-                        <p class="font-mono text-slate-700">${w.aadhaar || '-'}</p>
+                        <p class="font-mono text-slate-700 font-medium">${w.aadhaar || '-'}</p>
                         <p class="text-[11px] text-slate-500">Ph: ${w.phone || '-'}</p>
                     </td>
                     <td class="p-3 text-right">
-                        <button onclick="editWorker('${w.id}')" class="p-1.5 bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 rounded-lg transition-all" title="Edit">
+                        <button onclick="editWorker('${w.id}')" class="p-1.5 bg-white hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 rounded-lg border border-slate-200 transition-all" title="Edit">
                             <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                         </button>
                     </td>
@@ -658,24 +945,6 @@
             document.getElementById('permanentAddress').value = w.permanentAddress || '';
             document.getElementById('presentAddress').value = w.presentAddress || '';
 
-            base64Photo = w.photo || "";
-            if (base64Photo) {
-                const preview = document.getElementById('photoPreview');
-                preview.src = base64Photo;
-                preview.classList.remove('hidden');
-            } else {
-                document.getElementById('photoPreview').classList.add('hidden');
-            }
-
-            base64Signature = w.signature || "";
-            if (base64Signature) {
-                const sigPrev = document.getElementById('sigPreview');
-                sigPrev.src = base64Signature;
-                sigPrev.classList.remove('hidden');
-            } else {
-                document.getElementById('sigPreview').classList.add('hidden');
-            }
-
             document.getElementById('formTitle').innerHTML = '<i data-lucide="user-pen" class="w-5 h-5 text-indigo-600"></i> Edit Worker Record';
             document.getElementById('resetFormBtn').classList.remove('hidden');
             document.getElementById('submitBtn').innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Update Worker Record';
@@ -683,54 +952,142 @@
             lucide.createIcons();
         }
 
+        // --- STYLED EXCEL EXPORT (WITH MULTI-LINE WRAPPING & COLORED DUPLICATE ROWS) ---
         function exportToExcel() {
             if (workers.length === 0) {
                 showToast("No records available to export", "error");
                 return;
             }
 
-            const exportData = workers.map(w => ({
-                "Serial No": w.serialNo || '',
-                "Status / Remarks": w.isDuplicateAadhaar ? "Duplicate Aadhaar" : "Regular Entry",
-                "Induction Date": w.inductionDate || '',
-                "Worker Name": w.name || '',
-                "Father's Name": w.fatherName || '',
-                "Designation": w.designation || '',
-                "Agency": w.agency || '',
-                "Date of Birth": w.dob || '',
-                "Age": w.age || '',
-                "Aadhaar Number": w.aadhaar || '',
-                "Phone Number": w.phone || '',
-                "Emergency Contact": w.emergency || '',
-                "Permanent Address": w.permanentAddress || '',
-                "Present Address": w.presentAddress || '',
-                "Photo Status": w.photo ? "Attached (Base64)" : "None",
-                "Signature Status": w.signature ? "Attached (Base64)" : "None",
-                "QR Code Status": w.qrCode ? "Generated" : "None"
-            }));
+            // Prepare headers (No "Status / Remarks" column as requested!)
+            const headers = [
+                "Sl No",
+                "Induction Date",
+                "Worker Name",
+                "Father's Name",
+                "Designation",
+                "Agency / Contractor",
+                "Date of Birth",
+                "Age",
+                "Aadhaar Number",
+                "Phone Number",
+                "Emergency Contact",
+                "Permanent Address",
+                "Present Address",
+                "Worker Photo (Full Link)",
+                "Signature (Full Link)",
+                "ID Proof Front (Link)",
+                "ID Proof Back (Link)"
+            ];
 
-            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const rows = workers.map(w => [
+                w.serialNo || '',
+                w.inductionDate || '',
+                w.name || '',
+                w.fatherName || '',
+                w.designation || '',
+                w.agency || '',
+                w.dob || '',
+                w.age || '',
+                w.aadhaar || '',
+                w.phone || '',
+                w.emergency || '',
+                w.permanentAddress || '',
+                w.presentAddress || '',
+                w.photoFullUrl || (w.photoThumb ? 'Thumbnail In App' : ''),
+                w.sigFullUrl || (w.sigThumb ? 'Thumbnail In App' : ''),
+                w.proofFrontUrl || (w.proofFrontThumb ? 'Thumbnail In App' : ''),
+                w.proofBackUrl || (w.proofBackThumb ? 'Thumbnail In App' : '')
+            ]);
 
-            // Auto-fit column widths
-            const colWidths = [];
-            exportData.forEach(row => {
-                Object.keys(row).forEach((key, i) => {
-                    const val = String(row[key] || '');
-                    const len = Math.max(val.length, key.length);
-                    colWidths[i] = Math.max(colWidths[i] || 10, len + 3);
-                });
+            const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+
+            // Apply True Cell Styling: Wrap Text, Vertical/Horizontal Alignment, Borders, and Duplicate Row Coloring
+            const range = XLSX.utils.decode_range(worksheet['!ref']);
+
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                const isHeader = (R === 0);
+                const workerObj = !isHeader ? workers[R - 1] : null;
+                const isDup = workerObj ? (workerObj.isDuplicateAadhaar || isAadhaarDuplicated(workerObj.aadhaar)) : false;
+
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (!worksheet[cellAddress]) {
+                        worksheet[cellAddress] = { t: 's', v: '' };
+                    }
+
+                    // Convert URLs into clickable Excel hyperlinks
+                    const cellVal = String(worksheet[cellAddress].v || '');
+                    if (!isHeader && cellVal.startsWith('http')) {
+                        worksheet[cellAddress].l = { Target: cellVal, Tooltip: "Click to open full original image" };
+                        worksheet[cellAddress].v = "Open Full Image";
+                    }
+
+                    // Center short columns (Sl No, Dates, Age, IDs, Phones) & Left-align long text/addresses
+                    const centerCols = [0, 1, 6, 7, 8, 9, 10, 13, 14, 15, 16];
+                    const horizAlign = isHeader ? "center" : (centerCols.includes(C) ? "center" : "left");
+
+                    worksheet[cellAddress].s = {
+                        font: {
+                            name: "Calibri",
+                            sz: isHeader ? 11 : 10,
+                            bold: isHeader || isDup,
+                            color: { rgb: isHeader ? "FFFFFF" : (cellVal.startsWith('http') ? "1D4ED8" : (isDup ? "7C2D12" : "0F172A")) }
+                        },
+                        fill: {
+                            fgColor: {
+                                rgb: isHeader ? "3730A3" : (isDup ? "FDE68A" : (R % 2 === 0 ? "F8FAFC" : "FFFFFF"))
+                            }
+                        },
+                        alignment: {
+                            vertical: "center",
+                            horizontal: horizAlign,
+                            wrapText: true // Forces multi-line wrapping inside cells so all text is visible!
+                        },
+                        border: {
+                            top: { style: "thin", color: { rgb: "CBD5E1" } },
+                            bottom: { style: "thin", color: { rgb: "CBD5E1" } },
+                            left: { style: "thin", color: { rgb: "CBD5E1" } },
+                            right: { style: "thin", color: { rgb: "CBD5E1" } }
+                        }
+                    };
+                }
+            }
+
+            // Custom Column Widths so multi-line addresses & fields look clean and proportional
+            worksheet['!cols'] = [
+                { wch: 9 },  // Sl No
+                { wch: 14 }, // Induction Date
+                { wch: 22 }, // Worker Name
+                { wch: 20 }, // Father's Name
+                { wch: 16 }, // Designation
+                { wch: 22 }, // Agency
+                { wch: 14 }, // DOB
+                { wch: 10 }, // Age
+                { wch: 18 }, // Aadhaar
+                { wch: 14 }, // Phone
+                { wch: 15 }, // Emergency
+                { wch: 36 }, // Permanent Address (wraps cleanly onto multiple lines)
+                { wch: 36 }, // Present Address (wraps cleanly onto multiple lines)
+                { wch: 18 }, // Photo Link
+                { wch: 18 }, // Signature Link
+                { wch: 18 }, // Proof Front Link
+                { wch: 18 }  // Proof Back Link
+            ];
+
+            // Dynamic Row Heights based on address length so multi-line wrapped text has plenty of vertical room
+            const rowHeights = [{ hpt: 32 }]; // Header height
+            workers.forEach(w => {
+                const maxAddrLen = Math.max((w.permanentAddress || '').length, (w.presentAddress || '').length);
+                const linesNeeded = Math.ceil(maxAddrLen / 32) || 1;
+                rowHeights.push({ hpt: Math.max(28, linesNeeded * 18) });
             });
-            worksheet['!cols'] = colWidths.map(w => ({ wch: Math.min(w, 45) }));
-
-            // Row heights configuration
-            const rowHeights = [{ hpt: 30 }];
-            exportData.forEach(() => rowHeights.push({ hpt: 28 }));
             worksheet['!rows'] = rowHeights;
 
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Worker Inductions");
             XLSX.writeFile(workbook, "Worker_Induction_Register.xlsx");
-            showToast("Excel file downloaded successfully with complete records!");
+            showToast("Styled Excel file downloaded!");
         }
     </script>
 </body>
