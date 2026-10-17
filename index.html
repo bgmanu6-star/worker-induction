@@ -65,11 +65,11 @@
             <div class="space-y-3 text-xs">
                 <div>
                     <label class="block font-semibold text-slate-700 mb-1">Telegram Bot Token (For Original Proofs)</label>
-                    <input type="text" id="cfgBotToken" placeholder="e.g. 123456:ABC-DEF..." class="w-full px-3 py-2 border rounded-lg bg-slate-50 font-mono">
+                    <input type="text" id="cfgBotToken" placeholder="e.g. 8427529978:AAG..." class="w-full px-3 py-2 border rounded-lg bg-slate-50 font-mono">
                 </div>
                 <div>
                     <label class="block font-semibold text-slate-700 mb-1">Telegram Channel/Group Chat ID</label>
-                    <input type="text" id="cfgChatId" placeholder="e.g. -1001987654321" class="w-full px-3 py-2 border rounded-lg bg-slate-50 font-mono">
+                    <input type="text" id="cfgChatId" placeholder="e.g. -1004268150425" class="w-full px-3 py-2 border rounded-lg bg-slate-50 font-mono">
                 </div>
                 <div>
                     <label class="block font-semibold text-slate-700 mb-1">ImgBB Free API Key (For Clickable Full Image Links)</label>
@@ -140,7 +140,7 @@
                     <button type="button" id="resetFormBtn" onclick="resetForm()" class="hidden text-xs text-rose-600 hover:underline font-medium">Cancel Edit</button>
                 </div>
 
-                <!-- Smart Proof Entry (OCR Auto-Fill + Proof Upload) -->
+                <!-- Smart Proof Entry (OCR Auto-Fill + Proof Upload from Gallery or Camera) -->
                 <div class="mb-5 bg-indigo-50/70 border border-indigo-200 rounded-xl p-3.5 space-y-3">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
@@ -148,19 +148,21 @@
                         </span>
                         <span id="ocrStatus" class="text-[10px] font-semibold text-indigo-600 hidden animate-pulse">Scanning ID...</span>
                     </div>
-                    <p class="text-[11px] text-indigo-700 leading-tight">Upload or snap ID Proof (Front & Back). The app will scan details automatically and save the original proof to Telegram!</p>
+                    <p class="text-[11px] text-indigo-700 leading-tight">Upload ID proof from gallery or camera. The app will scan details automatically and save the original proof to Telegram!</p>
                     
                     <div class="grid grid-cols-2 gap-2">
                         <label class="cursor-pointer bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg p-2 flex flex-col items-center justify-center text-center transition-all">
                             <i data-lucide="id-card" class="w-4 h-4 text-indigo-600 mb-1"></i>
                             <span class="text-[10px] font-semibold text-slate-700">ID Proof Front</span>
-                            <input type="file" id="proofFrontInput" accept="image/*" capture="environment" onchange="handleProofUpload(event, 'front')" class="hidden">
+                            <!-- Removed capture="environment" so gallery & camera both work -->
+                            <input type="file" id="proofFrontInput" accept="image/*" onchange="handleProofUpload(event, 'front')" class="hidden">
                             <img id="proofFrontPreview" class="w-12 h-8 object-cover rounded mt-1 hidden border">
                         </label>
                         <label class="cursor-pointer bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg p-2 flex flex-col items-center justify-center text-center transition-all">
                             <i data-lucide="file-text" class="w-4 h-4 text-indigo-600 mb-1"></i>
                             <span class="text-[10px] font-semibold text-slate-700">ID Proof Back</span>
-                            <input type="file" id="proofBackInput" accept="image/*" capture="environment" onchange="handleProofUpload(event, 'back')" class="hidden">
+                            <!-- Removed capture="environment" so gallery & camera both work -->
+                            <input type="file" id="proofBackInput" accept="image/*" onchange="handleProofUpload(event, 'back')" class="hidden">
                             <img id="proofBackPreview" class="w-12 h-8 object-cover rounded mt-1 hidden border">
                         </label>
                     </div>
@@ -222,8 +224,8 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Aadhaar Card Number</label>
-                        <input type="text" id="aadhaar" maxlength="14" placeholder="12-digit ID number" oninput="formatAadhaar(this)" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">ID Number</label>
+                        <input type="text" id="aadhaar" maxlength="20" placeholder="ID number" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
@@ -262,11 +264,11 @@
                         <input type="text" id="presentAddress" list="addressSuggestions" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Type street, landmark or enter PIN...">
                     </div>
 
-                    <!-- Optional Worker Photo & Signature Image Upload -->
+                    <!-- Optional Worker Photo & Signature Image Upload (Supports Gallery & Camera) -->
                     <div class="grid grid-cols-2 gap-3 pt-1">
                         <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                             <label class="block text-[11px] font-semibold text-slate-600 mb-1">Worker Photo <span class="text-slate-400 font-normal">(Optional)</span></label>
-                            <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="handleMediaSelect(event, 'photoPreview')" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-indigo-50 file:text-indigo-700">
+                            <input type="file" id="photoInput" accept="image/*" onchange="handleMediaSelect(event, 'photoPreview')" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-indigo-50 file:text-indigo-700">
                             <img id="photoPreview" class="w-10 h-10 object-cover rounded mt-1.5 hidden border">
                         </div>
                         <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
@@ -347,7 +349,6 @@
 
         let workers = [];
 
-        // Temporary file holders for current form entry
         let selectedFiles = {
             proofFront: null,
             proofBack: null,
@@ -375,7 +376,6 @@
             });
         });
 
-        // --- SETTINGS MODAL (TELEGRAM & IMGBB) ---
         function toggleSettingsModal() {
             document.getElementById('settingsModal').classList.toggle('hidden');
         }
@@ -394,7 +394,6 @@
             showToast("Telegram & Image Host settings saved!");
         }
 
-        // --- ULTRA-LIGHTWEIGHT THUMBNAIL GENERATOR (~2KB) ---
         function createTinyThumbnail(file, maxWidth = 60, maxHeight = 60) {
             return new Promise((resolve) => {
                 if (!file) return resolve("");
@@ -418,7 +417,6 @@
             });
         }
 
-        // --- FREE IMAGE HOST UPLOAD (IMGBB) FOR CLICKABLE FULL IMAGE ---
         async function uploadToFreeImageHost(file) {
             const apiKey = localStorage.getItem('imgbb_api_key');
             if (!apiKey || !file) return "";
@@ -430,16 +428,13 @@
                     body: formData
                 });
                 const data = await res.json();
-                if (data && data.success) {
-                    return data.data.url; // Direct full-resolution URL
-                }
+                if (data && data.success) return data.data.url;
             } catch (err) {
                 console.error("ImgBB Upload Error:", err);
             }
             return "";
         }
 
-        // --- TELEGRAM ORIGINAL PROOF UPLOAD ---
         async function uploadToTelegram(file, caption) {
             const botToken = localStorage.getItem('tg_bot_token');
             const chatId = localStorage.getItem('tg_chat_id');
@@ -466,7 +461,6 @@
             return "";
         }
 
-        // --- SMART PROOF OCR AUTO-FILL (TESSERACT.JS) ---
         async function handleProofUpload(event, side) {
             const file = event.target.files[0];
             if (!file) return;
@@ -483,7 +477,6 @@
                 prev.classList.remove('hidden');
             }
 
-            // Run OCR to auto-fill fields
             const ocrStatus = document.getElementById('ocrStatus');
             ocrStatus.classList.remove('hidden');
             showToast(`Scanning ID ${side} for auto-fill...`);
@@ -504,22 +497,17 @@
         function parseOcrTextToForm(rawText, side) {
             const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 2);
 
-            // 1. Look for 12-digit ID pattern (XXXX XXXX XXXX)
             const idMatch = rawText.match(/\b\d{4}\s?\d{4}\s?\d{4}\b/);
             if (idMatch && !document.getElementById('aadhaar').value) {
-                const digits = idMatch[0].replace(/\D/g, '');
-                document.getElementById('aadhaar').value = digits.match(/.{1,4}/g).join(' ');
+                document.getElementById('aadhaar').value = idMatch[0];
             }
 
-            // 2. Look for DOB (DD/MM/YYYY or YYYY)
             const dobMatch = rawText.match(/\b(\d{2})[\/\-](\d{2})[\/\-](\d{4})\b/);
             if (dobMatch && !document.getElementById('dob').value) {
-                const yyyy = dobMatch[3], mm = dobMatch[2], dd = dobMatch[1];
-                document.getElementById('dob').value = `${yyyy}-${mm}-${dd}`;
+                document.getElementById('dob').value = `${dobMatch[3]}-${dobMatch[2]}-${dobMatch[1]}`;
                 calculateAge();
             }
 
-            // 3. Look for 6-digit PIN code (especially on back side)
             const pinMatch = rawText.match(/\b[654321]\d{5}\b/);
             if (pinMatch && !document.getElementById('permPincode').value) {
                 const pin = pinMatch[0];
@@ -527,14 +515,12 @@
                 handlePincodeInput(pin, 'permanentAddress', 'permLastFetched');
             }
 
-            // 4. Look for Father's Name (S/O, C/O, W/O, Father)
             const fatherRegex = /(?:S\/O|C\/O|W\/O|D\/O|Father)\s*[:\-]?\s*([A-Za-z\s\.]+)/i;
             const fatherMatch = rawText.match(fatherRegex);
             if (fatherMatch && fatherMatch[1] && !document.getElementById('fatherName').value) {
                 document.getElementById('fatherName').value = fatherMatch[1].split('\n')[0].trim();
             }
 
-            // 5. Try to extract Name on front side (line right above DOB or Father's name)
             if (side === 'front' && !document.getElementById('name').value) {
                 for (let i = 0; i < lines.length; i++) {
                     if (/DOB|Year of Birth|Male|Female/i.test(lines[i]) && i > 0) {
@@ -572,7 +558,6 @@
             modal.classList.remove('hidden');
         }
 
-        // --- QR CODE GENERATOR ---
         function generateQRCodeBase64(text) {
             try {
                 const qr = qrcode(0, 'M');
@@ -667,12 +652,6 @@
             setTimeout(() => { toast.classList.add('translate-y-20', 'opacity-0'); }, 3500);
         }
 
-        function formatAadhaar(input) {
-            let val = input.value.replace(/\D/g, '').substring(0, 12);
-            let formatted = val.match(/.{1,4}/g)?.join(' ') || val;
-            input.value = formatted;
-        }
-
         function calculateAge() {
             const dobVal = document.getElementById('dob').value;
             if (!dobVal) { document.getElementById('age').value = ''; return; }
@@ -698,7 +677,6 @@
             }
         }
 
-        // Check if an Aadhaar number has duplicates across the entire workers array
         function isAadhaarDuplicated(aadhaarStr) {
             if (!aadhaarStr) return false;
             const clean = aadhaarStr.trim();
@@ -729,13 +707,11 @@
             const existing = editId ? workers.find(w => w.id === editId) : {};
             const baseCaption = `Sl No: ${serialNo} | Name: ${name} | Agency: ${agency || 'N/A'}`;
 
-            // Generate tiny thumbnails (~2KB) & upload originals to Telegram / ImgBB
             const photoThumb = selectedFiles.photo ? await createTinyThumbnail(selectedFiles.photo) : (existing.photoThumb || "");
             const sigThumb = selectedFiles.sig ? await createTinyThumbnail(selectedFiles.sig, 80, 40) : (existing.sigThumb || "");
             const proofFrontThumb = selectedFiles.proofFront ? await createTinyThumbnail(selectedFiles.proofFront) : (existing.proofFrontThumb || "");
             const proofBackThumb = selectedFiles.proofBack ? await createTinyThumbnail(selectedFiles.proofBack) : (existing.proofBackThumb || "");
 
-            // Upload originals to Telegram & Free Host in parallel
             const [
                 tgPhotoLink, hostPhotoLink,
                 tgSigLink, hostSigLink,
@@ -952,14 +928,12 @@
             lucide.createIcons();
         }
 
-        // --- STYLED EXCEL EXPORT (WITH MULTI-LINE WRAPPING & COLORED DUPLICATE ROWS) ---
         function exportToExcel() {
             if (workers.length === 0) {
                 showToast("No records available to export", "error");
                 return;
             }
 
-            // Prepare headers (No "Status / Remarks" column as requested!)
             const headers = [
                 "Sl No",
                 "Induction Date",
@@ -969,7 +943,7 @@
                 "Agency / Contractor",
                 "Date of Birth",
                 "Age",
-                "Aadhaar Number",
+                "ID Number",
                 "Phone Number",
                 "Emergency Contact",
                 "Permanent Address",
@@ -1001,8 +975,6 @@
             ]);
 
             const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-
-            // Apply True Cell Styling: Wrap Text, Vertical/Horizontal Alignment, Borders, and Duplicate Row Coloring
             const range = XLSX.utils.decode_range(worksheet['!ref']);
 
             for (let R = range.s.r; R <= range.e.r; ++R) {
@@ -1016,14 +988,12 @@
                         worksheet[cellAddress] = { t: 's', v: '' };
                     }
 
-                    // Convert URLs into clickable Excel hyperlinks
                     const cellVal = String(worksheet[cellAddress].v || '');
                     if (!isHeader && cellVal.startsWith('http')) {
                         worksheet[cellAddress].l = { Target: cellVal, Tooltip: "Click to open full original image" };
                         worksheet[cellAddress].v = "Open Full Image";
                     }
 
-                    // Center short columns (Sl No, Dates, Age, IDs, Phones) & Left-align long text/addresses
                     const centerCols = [0, 1, 6, 7, 8, 9, 10, 13, 14, 15, 16];
                     const horizAlign = isHeader ? "center" : (centerCols.includes(C) ? "center" : "left");
 
@@ -1042,7 +1012,7 @@
                         alignment: {
                             vertical: "center",
                             horizontal: horizAlign,
-                            wrapText: true // Forces multi-line wrapping inside cells so all text is visible!
+                            wrapText: true
                         },
                         border: {
                             top: { style: "thin", color: { rgb: "CBD5E1" } },
@@ -1054,7 +1024,6 @@
                 }
             }
 
-            // Custom Column Widths so multi-line addresses & fields look clean and proportional
             worksheet['!cols'] = [
                 { wch: 9 },  // Sl No
                 { wch: 14 }, // Induction Date
@@ -1067,16 +1036,15 @@
                 { wch: 18 }, // Aadhaar
                 { wch: 14 }, // Phone
                 { wch: 15 }, // Emergency
-                { wch: 36 }, // Permanent Address (wraps cleanly onto multiple lines)
-                { wch: 36 }, // Present Address (wraps cleanly onto multiple lines)
+                { wch: 36 }, // Permanent Address
+                { wch: 36 }, // Present Address
                 { wch: 18 }, // Photo Link
                 { wch: 18 }, // Signature Link
                 { wch: 18 }, // Proof Front Link
                 { wch: 18 }  // Proof Back Link
             ];
 
-            // Dynamic Row Heights based on address length so multi-line wrapped text has plenty of vertical room
-            const rowHeights = [{ hpt: 32 }]; // Header height
+            const rowHeights = [{ hpt: 32 }];
             workers.forEach(w => {
                 const maxAddrLen = Math.max((w.permanentAddress || '').length, (w.presentAddress || '').length);
                 const linesNeeded = Math.ceil(maxAddrLen / 32) || 1;
