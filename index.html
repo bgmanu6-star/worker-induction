@@ -140,7 +140,7 @@
                     <button type="button" id="resetFormBtn" onclick="resetForm()" class="hidden text-xs text-rose-600 hover:underline font-medium">Cancel Edit</button>
                 </div>
 
-                <!-- Smart Proof Entry (OCR Auto-Fill + Proof Upload from Gallery or Camera) -->
+                <!-- Smart Proof Entry (Gallery & Camera Picker) -->
                 <div class="mb-5 bg-indigo-50/70 border border-indigo-200 rounded-xl p-3.5 space-y-3">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
@@ -148,23 +148,23 @@
                         </span>
                         <span id="ocrStatus" class="text-[10px] font-semibold text-indigo-600 hidden animate-pulse">Scanning ID...</span>
                     </div>
-                    <p class="text-[11px] text-indigo-700 leading-tight">Upload ID proof from gallery or camera. The app will scan details automatically and save the original proof to Telegram!</p>
+                    <p class="text-[11px] text-indigo-700 leading-tight">Upload ID proof from gallery or take a photo. The app will scan details automatically!</p>
                     
                     <div class="grid grid-cols-2 gap-2">
-                        <label class="cursor-pointer bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg p-2 flex flex-col items-center justify-center text-center transition-all">
+                        <!-- ID Proof Front Button -->
+                        <div onclick="document.getElementById('proofFrontInput').click()" class="cursor-pointer bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg p-2.5 flex flex-col items-center justify-center text-center transition-all">
                             <i data-lucide="id-card" class="w-4 h-4 text-indigo-600 mb-1"></i>
                             <span class="text-[10px] font-semibold text-slate-700">ID Proof Front</span>
-                            <!-- Removed capture="environment" so gallery & camera both work -->
                             <input type="file" id="proofFrontInput" accept="image/*" onchange="handleProofUpload(event, 'front')" class="hidden">
                             <img id="proofFrontPreview" class="w-12 h-8 object-cover rounded mt-1 hidden border">
-                        </label>
-                        <label class="cursor-pointer bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg p-2 flex flex-col items-center justify-center text-center transition-all">
+                        </div>
+                        <!-- ID Proof Back Button -->
+                        <div onclick="document.getElementById('proofBackInput').click()" class="cursor-pointer bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg p-2.5 flex flex-col items-center justify-center text-center transition-all">
                             <i data-lucide="file-text" class="w-4 h-4 text-indigo-600 mb-1"></i>
                             <span class="text-[10px] font-semibold text-slate-700">ID Proof Back</span>
-                            <!-- Removed capture="environment" so gallery & camera both work -->
                             <input type="file" id="proofBackInput" accept="image/*" onchange="handleProofUpload(event, 'back')" class="hidden">
                             <img id="proofBackPreview" class="w-12 h-8 object-cover rounded mt-1 hidden border">
-                        </label>
+                        </div>
                     </div>
                 </div>
 
@@ -264,16 +264,18 @@
                         <input type="text" id="presentAddress" list="addressSuggestions" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Type street, landmark or enter PIN...">
                     </div>
 
-                    <!-- Optional Worker Photo & Signature Image Upload (Supports Gallery & Camera) -->
+                    <!-- Optional Worker Photo & Signature Image Upload -->
                     <div class="grid grid-cols-2 gap-3 pt-1">
-                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Worker Photo <span class="text-slate-400 font-normal">(Optional)</span></label>
-                            <input type="file" id="photoInput" accept="image/*" onchange="handleMediaSelect(event, 'photoPreview')" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-indigo-50 file:text-indigo-700">
+                        <div onclick="document.getElementById('photoInput').click()" class="cursor-pointer bg-slate-50 hover:bg-slate-100 p-2.5 rounded-xl border border-slate-200 flex flex-col items-center text-center">
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1 pointer-events-none">Worker Photo <span class="text-slate-400 font-normal">(Opt)</span></label>
+                            <input type="file" id="photoInput" accept="image/*" onchange="handleMediaSelect(event, 'photoPreview')" class="hidden">
+                            <div class="text-[10px] text-indigo-600 font-medium underline">Choose / Snap</div>
                             <img id="photoPreview" class="w-10 h-10 object-cover rounded mt-1.5 hidden border">
                         </div>
-                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Signature Img <span class="text-slate-400 font-normal">(Optional)</span></label>
-                            <input type="file" id="sigInput" accept="image/*" onchange="handleMediaSelect(event, 'sigPreview')" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-indigo-50 file:text-indigo-700">
+                        <div onclick="document.getElementById('sigInput').click()" class="cursor-pointer bg-slate-50 hover:bg-slate-100 p-2.5 rounded-xl border border-slate-200 flex flex-col items-center text-center">
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-1 pointer-events-none">Signature Img <span class="text-slate-400 font-normal">(Opt)</span></label>
+                            <input type="file" id="sigInput" accept="image/*" onchange="handleMediaSelect(event, 'sigPreview')" class="hidden">
+                            <div class="text-[10px] text-indigo-600 font-medium underline">Choose / Snap</div>
                             <img id="sigPreview" class="w-14 h-10 object-contain bg-white rounded mt-1.5 hidden border">
                         </div>
                     </div>
@@ -1033,7 +1035,7 @@
                 { wch: 22 }, // Agency
                 { wch: 14 }, // DOB
                 { wch: 10 }, // Age
-                { wch: 18 }, // Aadhaar
+                { wch: 18 }, // ID Number
                 { wch: 14 }, // Phone
                 { wch: 15 }, // Emergency
                 { wch: 36 }, // Permanent Address
