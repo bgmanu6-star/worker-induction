@@ -41,8 +41,13 @@
                 </div>
             </div>
             <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+                <!-- Hidden CSV File Input -->
+                <input type="file" id="csvFileInput" accept=".csv,.xlsx" onchange="handleCSVImport(event)" class="hidden">
+                <button onclick="document.getElementById('csvFileInput').click()" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all shadow-sm">
+                    <i data-lucide="upload" class="w-4 h-4"></i> Import CSV Register
+                </button>
                 <button onclick="toggleSettingsModal()" class="bg-indigo-600 hover:bg-indigo-500 border border-indigo-400/30 text-white px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all">
-                    <i data-lucide="settings" class="w-4 h-4"></i> Telegram / Img Host Setup
+                    <i data-lucide="settings" class="w-4 h-4"></i> Setup
                 </button>
                 <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all shadow-sm">
                     <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Export Styled Excel
@@ -51,7 +56,7 @@
         </div>
     </header>
 
-    <!-- Settings Modal for Telegram & ImgBB -->
+    <!-- Settings Modal -->
     <div id="settingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
             <div class="flex justify-between items-center border-b pb-3">
@@ -64,17 +69,16 @@
             </div>
             <div class="space-y-3 text-xs">
                 <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Telegram Bot Token (For Original Proofs)</label>
+                    <label class="block font-semibold text-slate-700 mb-1">Telegram Bot Token</label>
                     <input type="text" id="cfgBotToken" placeholder="e.g. 8427529978:AAG..." class="w-full px-3 py-2 border rounded-lg bg-slate-50 font-mono">
                 </div>
                 <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Telegram Channel/Group Chat ID</label>
+                    <label class="block font-semibold text-slate-700 mb-1">Telegram Chat ID</label>
                     <input type="text" id="cfgChatId" placeholder="e.g. -1004268150425" class="w-full px-3 py-2 border rounded-lg bg-slate-50 font-mono">
                 </div>
                 <div>
-                    <label class="block font-semibold text-slate-700 mb-1">ImgBB Free API Key (For Clickable Full Image Links)</label>
+                    <label class="block font-semibold text-slate-700 mb-1">ImgBB API Key</label>
                     <input type="text" id="cfgImgbbKey" placeholder="Get free key at api.imgbb.com" class="w-full px-3 py-2 border rounded-lg bg-slate-50 font-mono">
-                    <p class="text-[11px] text-slate-400 mt-1">If ImgBB key is provided, clicking any thumbnail in the App or Excel opens the full HD image directly in the browser!</p>
                 </div>
             </div>
             <div class="flex justify-end gap-2 pt-2">
@@ -83,7 +87,7 @@
         </div>
     </div>
 
-    <!-- Image Lightbox Modal (When clicking thumbnails in App) -->
+    <!-- Image Lightbox Modal -->
     <div id="imageModal" onclick="this.classList.add('hidden')" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 cursor-zoom-out">
         <div class="max-w-3xl max-h-[90vh] bg-white p-2 rounded-2xl shadow-2xl overflow-hidden flex flex-col items-center">
             <img id="modalFullImage" src="" class="max-h-[80vh] w-auto object-contain rounded-xl" alt="Full View">
@@ -93,7 +97,7 @@
         </div>
     </div>
 
-    <!-- Main Content Container -->
+    <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 mt-6 space-y-6">
 
         <!-- Stats Overview Cards -->
@@ -140,7 +144,7 @@
                     <button type="button" id="resetFormBtn" onclick="resetForm()" class="hidden text-xs text-rose-600 hover:underline font-medium">Cancel Edit</button>
                 </div>
 
-                <!-- Smart Proof Entry (Gallery & Camera Picker) -->
+                <!-- Smart Proof Entry -->
                 <div class="mb-5 bg-indigo-50/70 border border-indigo-200 rounded-xl p-3.5 space-y-3">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
@@ -148,17 +152,15 @@
                         </span>
                         <span id="ocrStatus" class="text-[10px] font-semibold text-indigo-600 hidden animate-pulse">Scanning ID...</span>
                     </div>
-                    <p class="text-[11px] text-indigo-700 leading-tight">Upload ID proof from gallery or take a photo. The app will scan details automatically!</p>
+                    <p class="text-[11px] text-indigo-700 leading-tight">Upload ID proof from gallery or take a photo to auto-fill details.</p>
                     
                     <div class="grid grid-cols-2 gap-2">
-                        <!-- ID Proof Front Button -->
                         <div onclick="document.getElementById('proofFrontInput').click()" class="cursor-pointer bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg p-2.5 flex flex-col items-center justify-center text-center transition-all">
                             <i data-lucide="id-card" class="w-4 h-4 text-indigo-600 mb-1"></i>
                             <span class="text-[10px] font-semibold text-slate-700">ID Proof Front</span>
                             <input type="file" id="proofFrontInput" accept="image/*" onchange="handleProofUpload(event, 'front')" class="hidden">
                             <img id="proofFrontPreview" class="w-12 h-8 object-cover rounded mt-1 hidden border">
                         </div>
-                        <!-- ID Proof Back Button -->
                         <div onclick="document.getElementById('proofBackInput').click()" class="cursor-pointer bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg p-2.5 flex flex-col items-center justify-center text-center transition-all">
                             <i data-lucide="file-text" class="w-4 h-4 text-indigo-600 mb-1"></i>
                             <span class="text-[10px] font-semibold text-slate-700">ID Proof Back</span>
@@ -189,7 +191,7 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Father's Name</label>
-                        <input type="text" id="fatherName" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Father's name (Optional)">
+                        <input type="text" id="fatherName" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Father's name">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
@@ -215,7 +217,7 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Date of Birth</label>
-                            <input type="text" id="dob" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'" onchange="calculateAge()" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="YYYY-MM-DD or pick">
+                            <input type="text" id="dob" onfocus="this.type='date'" onblur="if(!this.value)this.type='text'" onchange="calculateAge()" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="YYYY-MM-DD">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Calculated Age</label>
@@ -242,29 +244,26 @@
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <label class="block text-xs font-semibold text-slate-600">Permanent Address</label>
-                            <div class="flex items-center gap-1">
-                                <input type="text" id="permPincode" maxlength="6" oninput="handlePincodeInput(this.value, 'permanentAddress', 'permLastFetched')" placeholder="PIN Code" class="w-20 px-2 py-0.5 text-[11px] bg-slate-100 border border-slate-300 rounded focus:bg-white outline-none font-mono" title="Type 6-digit PIN code">
-                                <input type="hidden" id="permLastFetched" value="">
-                            </div>
+                            <input type="text" id="permPincode" maxlength="6" oninput="handlePincodeInput(this.value, 'permanentAddress', 'permLastFetched')" placeholder="PIN Code" class="w-20 px-2 py-0.5 text-[11px] bg-slate-100 border border-slate-300 rounded focus:bg-white outline-none font-mono">
+                            <input type="hidden" id="permLastFetched" value="">
                         </div>
-                        <input type="text" id="permanentAddress" list="addressSuggestions" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Type street, landmark or enter PIN...">
+                        <input type="text" id="permanentAddress" list="addressSuggestions" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Enter address...">
                     </div>
 
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <label class="block text-xs font-semibold text-slate-600">Present Address</label>
                             <div class="flex items-center gap-2">
-                                <input type="text" id="presPincode" maxlength="6" oninput="handlePincodeInput(this.value, 'presentAddress', 'presLastFetched')" placeholder="PIN Code" class="w-20 px-2 py-0.5 text-[11px] bg-slate-100 border border-slate-300 rounded focus:bg-white outline-none font-mono" title="Type 6-digit PIN code">
+                                <input type="text" id="presPincode" maxlength="6" oninput="handlePincodeInput(this.value, 'presentAddress', 'presLastFetched')" placeholder="PIN Code" class="w-20 px-2 py-0.5 text-[11px] bg-slate-100 border border-slate-300 rounded focus:bg-white outline-none font-mono">
                                 <input type="hidden" id="presLastFetched" value="">
                                 <label class="text-[11px] text-indigo-600 font-medium cursor-pointer flex items-center gap-1">
                                     <input type="checkbox" id="sameAddress" onclick="copyAddress()" class="rounded text-indigo-600 focus:ring-indigo-500 w-3 h-3"> Same as Permanent
                                 </label>
                             </div>
                         </div>
-                        <input type="text" id="presentAddress" list="addressSuggestions" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Type street, landmark or enter PIN...">
+                        <input type="text" id="presentAddress" list="addressSuggestions" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all" placeholder="Enter address...">
                     </div>
 
-                    <!-- Optional Worker Photo & Signature Image Upload -->
                     <div class="grid grid-cols-2 gap-3 pt-1">
                         <div onclick="document.getElementById('photoInput').click()" class="cursor-pointer bg-slate-50 hover:bg-slate-100 p-2.5 rounded-xl border border-slate-200 flex flex-col items-center text-center">
                             <label class="block text-[11px] font-semibold text-slate-600 mb-1 pointer-events-none">Worker Photo <span class="text-slate-400 font-normal">(Opt)</span></label>
@@ -280,7 +279,6 @@
                         </div>
                     </div>
 
-                    <!-- Autocomplete suggestion datalists -->
                     <datalist id="addressSuggestions"></datalist>
 
                     <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg text-sm transition-all shadow-md shadow-indigo-100 flex items-center justify-center gap-2">
@@ -350,16 +348,9 @@
         const db = firebase.firestore();
 
         let workers = [];
-
-        let selectedFiles = {
-            proofFront: null,
-            proofBack: null,
-            photo: null,
-            sig: null
-        };
+        let selectedFiles = { proofFront: null, proofBack: null, photo: null, sig: null };
 
         window.addEventListener('DOMContentLoaded', () => {
-            // Set default date to today only if the field is completely empty initially
             if (!document.getElementById('inductionDate').value) {
                 document.getElementById('inductionDate').valueAsDate = new Date();
             }
@@ -396,7 +387,67 @@
             localStorage.setItem('tg_chat_id', document.getElementById('cfgChatId').value.trim());
             localStorage.setItem('imgbb_api_key', document.getElementById('cfgImgbbKey').value.trim());
             toggleSettingsModal();
-            showToast("Telegram & Image Host settings saved!");
+            showToast("Settings saved!");
+        }
+
+        // --- NEW: CSV / Excel Bulk Importer Function ---
+        function handleCSVImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            showToast("Reading file and importing to cloud...");
+
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    if (rows.length === 0) {
+                        showToast("File is empty.", "error");
+                        return;
+                    }
+
+                    let count = 0;
+                    for (let r of rows) {
+                        const workerData = {
+                            serialNo: String(r['Sl No'] || r['serialNo'] || ''),
+                            inductionDate: String(r['Induction Date'] || r['inductionDate'] || ''),
+                            name: String(r['Worker Name'] || r['name'] || ''),
+                            fatherName: String(r['Father\'s Name'] || r['fatherName'] || ''),
+                            designation: String(r['Designation'] || r['designation'] || ''),
+                            agency: String(r['Agency / Contractor'] || r['agency'] || ''),
+                            dob: String(r['Date of Birth'] || r['dob'] || ''),
+                            age: String(r['Age'] || r['age'] || ''),
+                            aadhaar: String(r['ID Number'] || r['aadhaar'] || ''),
+                            phone: String(r['Phone Number'] || r['phone'] || ''),
+                            emergency: String(r['Emergency Contact'] || r['emergency'] || ''),
+                            permanentAddress: String(r['Permanent Address'] || r['permanentAddress'] || ''),
+                            presentAddress: String(r['Present Address'] || r['presentAddress'] || ''),
+                            photoFullUrl: '',
+                            sigFullUrl: '',
+                            proofFrontUrl: '',
+                            proofBackUrl: '',
+                            qrCode: '',
+                            isDuplicateAadhaar: false,
+                            updatedAt: new Date().toISOString()
+                        };
+
+                        if (workerData.name) {
+                            await db.collection("workers").add(workerData);
+                            count++;
+                        }
+                    }
+
+                    showToast(`Successfully imported ${count} workers to database!`);
+                    document.getElementById('csvFileInput').value = '';
+                } catch (err) {
+                    console.error("Import Error:", err);
+                    showToast("Error importing file. Check format.", "error");
+                }
+            };
+            reader.readAsArrayBuffer(file);
         }
 
         function createTinyThumbnail(file, maxWidth = 60, maxHeight = 60) {
@@ -410,8 +461,7 @@
                         let w = img.width, h = img.height;
                         if (w > h) { if (w > maxWidth) { h *= maxWidth / w; w = maxWidth; } }
                         else { if (h > maxHeight) { w *= maxHeight / h; h = maxHeight; } }
-                        canvas.width = w;
-                        canvas.height = h;
+                        canvas.width = w; canvas.height = h;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, w, h);
                         resolve(canvas.toDataURL('image/jpeg', 0.6));
@@ -428,15 +478,10 @@
             try {
                 const formData = new FormData();
                 formData.append("image", file);
-                const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-                    method: "POST",
-                    body: formData
-                });
+                const res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, { method: "POST", body: formData });
                 const data = await res.json();
                 if (data && data.success) return data.data.url;
-            } catch (err) {
-                console.error("ImgBB Upload Error:", err);
-            }
+            } catch (err) { console.error(err); }
             return "";
         }
 
@@ -444,56 +489,42 @@
             const botToken = localStorage.getItem('tg_bot_token');
             const chatId = localStorage.getItem('tg_chat_id');
             if (!botToken || !chatId || !file) return "";
-
             try {
                 const formData = new FormData();
                 formData.append("chat_id", chatId);
                 formData.append("photo", file);
                 formData.append("caption", caption);
-
-                const res = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
-                    method: "POST",
-                    body: formData
-                });
+                const res = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, { method: "POST", body: formData });
                 const data = await res.json();
                 if (data && data.ok) {
                     const cleanChatId = String(chatId).replace("-100", "");
                     return `https://t.me/c/${cleanChatId}/${data.result.message_id}`;
                 }
-            } catch (err) {
-                console.error("Telegram Upload Error:", err);
-            }
+            } catch (err) { console.error(err); }
             return "";
         }
 
         async function handleProofUpload(event, side) {
             const file = event.target.files[0];
             if (!file) return;
-
             if (side === 'front') {
                 selectedFiles.proofFront = file;
                 const prev = document.getElementById('proofFrontPreview');
-                prev.src = URL.createObjectURL(file);
-                prev.classList.remove('hidden');
+                prev.src = URL.createObjectURL(file); prev.classList.remove('hidden');
             } else {
                 selectedFiles.proofBack = file;
                 const prev = document.getElementById('proofBackPreview');
-                prev.src = URL.createObjectURL(file);
-                prev.classList.remove('hidden');
+                prev.src = URL.createObjectURL(file); prev.classList.remove('hidden');
             }
-
             const ocrStatus = document.getElementById('ocrStatus');
             ocrStatus.classList.remove('hidden');
-            showToast(`Scanning ID ${side} for auto-fill...`);
-
+            showToast(`Scanning ID ${side}...`);
             try {
                 const result = await Tesseract.recognize(file, 'eng');
-                const text = result.data.text;
-                parseOcrTextToForm(text, side);
-                showToast("Proof scanned & fields auto-filled!");
+                parseOcrTextToForm(result.data.text, side);
+                showToast("ID scanned & fields auto-filled!");
             } catch (err) {
-                console.error("OCR Error:", err);
-                showToast("Could not auto-read text, please verify manually.", "error");
+                showToast("Could not auto-read text.", "error");
             } finally {
                 ocrStatus.classList.add('hidden');
             }
@@ -501,41 +532,25 @@
 
         function parseOcrTextToForm(rawText, side) {
             const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 2);
-
             const idMatch = rawText.match(/\b\d{4}\s?\d{4}\s?\d{4}\b/);
             if (idMatch && !document.getElementById('aadhaar').value) {
                 document.getElementById('aadhaar').value = idMatch[0];
             }
-
             const dobMatch = rawText.match(/\b(\d{2})[\/\-](\d{2})[\/\-](\d{4})\b/);
             if (dobMatch && !document.getElementById('dob').value) {
                 document.getElementById('dob').value = `${dobMatch[3]}-${dobMatch[2]}-${dobMatch[1]}`;
                 calculateAge();
             }
-
             const pinMatch = rawText.match(/\b[654321]\d{5}\b/);
             if (pinMatch && !document.getElementById('permPincode').value) {
                 const pin = pinMatch[0];
                 document.getElementById('permPincode').value = pin;
                 handlePincodeInput(pin, 'permanentAddress', 'permLastFetched');
             }
-
             const fatherRegex = /(?:S\/O|C\/O|W\/O|D\/O|Father)\s*[:\-]?\s*([A-Za-z\s\.]+)/i;
             const fatherMatch = rawText.match(fatherRegex);
             if (fatherMatch && fatherMatch[1] && !document.getElementById('fatherName').value) {
                 document.getElementById('fatherName').value = fatherMatch[1].split('\n')[0].trim();
-            }
-
-            if (side === 'front' && !document.getElementById('name').value) {
-                for (let i = 0; i < lines.length; i++) {
-                    if (/DOB|Year of Birth|Male|Female/i.test(lines[i]) && i > 0) {
-                        const candidate = lines[i - 1].replace(/[^a-zA-Z\s\.]/g, '').trim();
-                        if (candidate.length > 3 && !/Government|India|Authority/i.test(candidate)) {
-                            document.getElementById('name').value = candidate;
-                            break;
-                        }
-                    }
-                }
             }
         }
 
@@ -551,15 +566,9 @@
 
         function openFullImageModal(thumbSrc, fullUrl) {
             const modal = document.getElementById('imageModal');
-            const img = document.getElementById('modalFullImage');
+            document.getElementById('modalFullImage').src = fullUrl && fullUrl.startsWith('http') ? fullUrl : thumbSrc;
             const link = document.getElementById('modalExternalLink');
-            img.src = fullUrl && fullUrl.startsWith('http') && !fullUrl.includes('t.me/') ? fullUrl : thumbSrc;
-            if (fullUrl) {
-                link.href = fullUrl;
-                link.classList.remove('hidden');
-            } else {
-                link.classList.add('hidden');
-            }
+            if (fullUrl) { link.href = fullUrl; link.classList.remove('hidden'); } else { link.classList.add('hidden'); }
             modal.classList.remove('hidden');
         }
 
@@ -568,36 +577,25 @@
                 const qr = qrcode(0, 'M');
                 qr.addData(text);
                 qr.make();
-                const cellSize = 3;
-                const margin = 6;
+                const cellSize = 3, margin = 6;
                 const size = qr.getModuleCount() * cellSize + margin * 2;
                 const qrCanvas = document.createElement('canvas');
-                qrCanvas.width = size;
-                qrCanvas.height = size;
+                qrCanvas.width = size; qrCanvas.height = size;
                 const qCtx = qrCanvas.getContext('2d');
-                qCtx.fillStyle = '#ffffff';
-                qCtx.fillRect(0, 0, size, size);
+                qCtx.fillStyle = '#ffffff'; qCtx.fillRect(0, 0, size, size);
                 qCtx.fillStyle = '#000000';
                 for (let r = 0; r < qr.getModuleCount(); r++) {
                     for (let c = 0; c < qr.getModuleCount(); c++) {
-                        if (qr.isDark(r, c)) {
-                            qCtx.fillRect(margin + c * cellSize, margin + r * cellSize, cellSize, cellSize);
-                        }
+                        if (qr.isDark(r, c)) qCtx.fillRect(margin + c * cellSize, margin + r * cellSize, cellSize, cellSize);
                     }
                 }
                 return qrCanvas.toDataURL('image/png');
-            } catch (err) {
-                return "";
-            }
+            } catch (err) { return ""; }
         }
 
         function updateSuggestions() {
-            const allAddresses = [...new Set([
-                ...workers.map(w => w.permanentAddress),
-                ...workers.map(w => w.presentAddress)
-            ])].filter(Boolean);
+            const allAddresses = [...new Set([...workers.map(w => w.permanentAddress), ...workers.map(w => w.presentAddress)])].filter(Boolean);
             document.getElementById('addressSuggestions').innerHTML = allAddresses.map(addr => `<option value="${addr}">`).join('');
-
             const allAgencies = [...new Set(workers.map(w => w.agency ? w.agency.trim() : ''))].filter(Boolean);
             document.getElementById('agencySuggestions').innerHTML = allAgencies.map(ag => `<option value="${ag}">`).join('');
         }
@@ -606,34 +604,18 @@
             const inputField = document.getElementById(targetFieldId);
             const lastFetchedInput = document.getElementById(lastFetchedId);
             let currentVal = inputField.value.trim();
-
-            if (lastFetchedInput.value && !pincode.startsWith(lastFetchedInput.value.substring(0, 3))) {
-                currentVal = currentVal.replace(new RegExp(',?\\s*' + lastFetchedInput.value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '$'), '').trim();
-                lastFetchedInput.value = '';
-                inputField.value = currentVal;
-            }
-
             if (pincode.length !== 6) return;
-
             try {
                 const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
                 const data = await response.json();
                 if (data[0].Status === "Success") {
                     const postOffice = data[0].PostOffice[0];
                     const fetchedString = `${postOffice.Name}, ${postOffice.District}, ${postOffice.State} - ${pincode}`;
-                    
-                    if (lastFetchedInput.value) {
-                        currentVal = currentVal.replace(new RegExp(',?\\s*' + lastFetchedInput.value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '$'), '').trim();
-                    }
                     lastFetchedInput.value = fetchedString;
                     inputField.value = currentVal ? `${currentVal}, ${fetchedString}` : fetchedString;
                     showToast("PIN code area loaded!");
-                } else {
-                    showToast("Invalid PIN code", "error");
                 }
-            } catch (error) {
-                console.error("PIN lookup error:", error);
-            }
+            } catch (error) { console.error(error); }
         }
 
         function setAutoSerialNo() {
@@ -642,7 +624,6 @@
             if (workers.length > 0) {
                 const nums = workers.map(w => parseInt(w.serialNo)).filter(n => !isNaN(n));
                 if (nums.length > 0) nextNum = Math.max(...nums) + 1;
-                else nextNum = workers.length + 1;
             }
             document.getElementById('serialNo').value = String(nextNum).padStart(3, '0');
         }
@@ -665,20 +646,17 @@
             const today = new Date();
             let age = today.getFullYear() - dobDate.getFullYear();
             const m = today.getMonth() - dobDate.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) { age--; }
+            if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) age--;
             document.getElementById('age').value = age >= 0 ? age + ' Years' : '0 Years';
         }
 
         function copyAddress() {
-            const isChecked = document.getElementById('sameAddress').checked;
-            if (isChecked) {
+            if (document.getElementById('sameAddress').checked) {
                 document.getElementById('presentAddress').value = document.getElementById('permanentAddress').value;
                 document.getElementById('presPincode').value = document.getElementById('permPincode').value;
-                document.getElementById('presLastFetched').value = document.getElementById('permLastFetched').value;
             } else {
                 document.getElementById('presentAddress').value = '';
                 document.getElementById('presPincode').value = '';
-                document.getElementById('presLastFetched').value = '';
             }
         }
 
@@ -691,7 +669,6 @@
 
         async function handleFormSubmit(event) {
             event.preventDefault();
-
             const serialNo = document.getElementById('serialNo').value.trim() || '000';
             const name = document.getElementById('name').value.trim();
             const aadhaar = document.getElementById('aadhaar').value.trim();
@@ -701,12 +678,8 @@
             const existingWithSameAadhaar = aadhaar ? workers.filter(w => w.id !== editId && (w.aadhaar || '').trim() === aadhaar) : [];
             const isDuplicateAadhaar = existingWithSameAadhaar.length > 0;
 
-            if (isDuplicateAadhaar) {
-                showToast(`Duplicate ID detected! Matches Sl No: ${existingWithSameAadhaar.map(w => w.serialNo).join(', ')}`, "error");
-            }
-
             const submitBtn = document.getElementById('submitBtn');
-            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Uploading Media & Saving...';
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Saving...';
             lucide.createIcons();
 
             const existing = editId ? workers.find(w => w.id === editId) : {};
@@ -717,19 +690,14 @@
             const proofFrontThumb = selectedFiles.proofFront ? await createTinyThumbnail(selectedFiles.proofFront) : (existing.proofFrontThumb || "");
             const proofBackThumb = selectedFiles.proofBack ? await createTinyThumbnail(selectedFiles.proofBack) : (existing.proofBackThumb || "");
 
-            const [
-                tgPhotoLink, hostPhotoLink,
-                tgSigLink, hostSigLink,
-                tgProofFront, hostProofFront,
-                tgProofBack, hostProofBack
-            ] = await Promise.all([
-                uploadToTelegram(selectedFiles.photo, `${baseCaption} - Worker Photo`),
+            const [tgPhoto, hostPhoto, tgSig, hostSig, tgFront, hostFront, tgBack, hostBack] = await Promise.all([
+                uploadToTelegram(selectedFiles.photo, `${baseCaption} - Photo`),
                 uploadToFreeImageHost(selectedFiles.photo),
                 uploadToTelegram(selectedFiles.sig, `${baseCaption} - Signature`),
                 uploadToFreeImageHost(selectedFiles.sig),
-                uploadToTelegram(selectedFiles.proofFront, `${baseCaption} - ID Proof Front`),
+                uploadToTelegram(selectedFiles.proofFront, `${baseCaption} - Proof Front`),
                 uploadToFreeImageHost(selectedFiles.proofFront),
-                uploadToTelegram(selectedFiles.proofBack, `${baseCaption} - ID Proof Back`),
+                uploadToTelegram(selectedFiles.proofBack, `${baseCaption} - Proof Back`),
                 uploadToFreeImageHost(selectedFiles.proofBack)
             ]);
 
@@ -737,31 +705,25 @@
             const qrCodeBase64 = generateQRCodeBase64(qrText);
 
             const workerData = {
-                serialNo: serialNo,
-                name: name,
+                serialNo, name,
                 fatherName: document.getElementById('fatherName').value.trim(),
                 designation: document.getElementById('designation').value.trim(),
-                agency: agency,
+                agency,
                 dob: document.getElementById('dob').value,
                 age: document.getElementById('age').value,
-                aadhaar: aadhaar,
+                aadhaar,
                 phone: document.getElementById('phone').value.trim(),
                 emergency: document.getElementById('emergency').value.trim(),
                 permanentAddress: document.getElementById('permanentAddress').value.trim(),
                 presentAddress: document.getElementById('presentAddress').value.trim(),
                 inductionDate: document.getElementById('inductionDate').value,
-                photoThumb: photoThumb,
-                sigThumb: sigThumb,
-                proofFrontThumb: proofFrontThumb,
-                proofBackThumb: proofBackThumb,
-                photoFullUrl: hostPhotoLink || tgPhotoLink || existing.photoFullUrl || "",
-                sigFullUrl: hostSigLink || tgSigLink || existing.sigFullUrl || "",
-                proofFrontUrl: hostProofFront || tgProofFront || existing.proofFrontUrl || "",
-                proofBackUrl: hostProofBack || tgProofBack || existing.proofBackUrl || "",
-                qrCode: qrCodeBase64,
-                qrTextData: qrText,
-                isDuplicateAadhaar: isDuplicateAadhaar,
-                updatedAt: new Date().toISOString()
+                photoThumb, sigThumb, proofFrontThumb, proofBackThumb,
+                photoFullUrl: hostPhoto || tgPhoto || existing.photoFullUrl || "",
+                sigFullUrl: hostSig || tgSig || existing.sigFullUrl || "",
+                proofFrontUrl: hostFront || tgFront || existing.proofFrontUrl || "",
+                proofBackUrl: hostBack || tgBack || existing.proofBackUrl || "",
+                qrCode: qrCodeBase64, qrTextData: qrText,
+                isDuplicateAadhaar, updatedAt: new Date().toISOString()
             };
 
             try {
@@ -770,11 +732,10 @@
                     showToast("Worker updated successfully!");
                 } else {
                     await db.collection("workers").add(workerData);
-                    showToast("Worker & Proofs saved successfully!");
+                    showToast("Worker saved successfully!");
                 }
                 resetForm();
             } catch (error) {
-                console.error("Error saving document: ", error);
                 showToast("Error saving to cloud database.", "error");
             } finally {
                 submitBtn.innerHTML = '<i data-lucide="user-check" class="w-4 h-4"></i> Save Induction Record';
@@ -783,47 +744,27 @@
         }
 
         function resetForm() {
-            // Keep the current inductionDate value saved so it doesn't get wiped out
             const currentInductionDate = document.getElementById('inductionDate').value;
-
             document.getElementById('inductionForm').reset();
             document.getElementById('editId').value = '';
             document.getElementById('permLastFetched').value = '';
             document.getElementById('presLastFetched').value = '';
-            
-            // Restore the user's preferred induction date
-            if (currentInductionDate) {
-                document.getElementById('inductionDate').value = currentInductionDate;
-            }
+            if (currentInductionDate) document.getElementById('inductionDate').value = currentInductionDate;
             
             ['photoPreview', 'sigPreview', 'proofFrontPreview', 'proofBackPreview'].forEach(id => {
                 const el = document.getElementById(id);
-                el.classList.add('hidden');
-                el.src = '';
+                el.classList.add('hidden'); el.src = '';
             });
             selectedFiles = { proofFront: null, proofBack: null, photo: null, sig: null };
-
             document.getElementById('formTitle').innerHTML = '<i data-lucide="user-plus" class="w-5 h-5 text-indigo-600"></i> New Induction Entry';
             document.getElementById('resetFormBtn').classList.add('hidden');
-            document.getElementById('submitBtn').innerHTML = '<i data-lucide="user-check" class="w-4 h-4"></i> Save Induction Record';
             setAutoSerialNo();
             lucide.createIcons();
         }
 
         function updateStats() {
             document.getElementById('statTotalWorkers').innerText = workers.length;
-            
-            const normalizedAgenciesMap = {};
-            workers.forEach(w => {
-                if (!w.agency) return;
-                const cleanName = w.agency.trim();
-                const lowerKey = cleanName.toLowerCase();
-                if (!normalizedAgenciesMap[lowerKey]) {
-                    normalizedAgenciesMap[lowerKey] = cleanName;
-                }
-            });
-
-            const uniqueAgencies = Object.values(normalizedAgenciesMap);
+            const uniqueAgencies = [...new Set(workers.map(w => w.agency ? w.agency.trim() : '').filter(Boolean))];
             document.getElementById('statTotalAgencies').innerText = uniqueAgencies.length;
 
             const breakdownList = document.getElementById('agencyBreakdownList');
@@ -831,7 +772,6 @@
                 breakdownList.innerHTML = '<span class="text-sm text-slate-400 italic">No workers registered yet.</span>';
                 return;
             }
-
             breakdownList.innerHTML = '';
             uniqueAgencies.forEach(agencyName => {
                 const count = workers.filter(w => w.agency && w.agency.trim().toLowerCase() === agencyName.toLowerCase()).length;
@@ -848,16 +788,14 @@
             tbody.innerHTML = '';
 
             const filtered = workers.filter(w => {
-                const name = (w.name || '').toLowerCase();
-                const agency = (w.agency || '').toLowerCase();
-                const designation = (w.designation || '').toLowerCase();
-                const aadhaar = (w.aadhaar || '').toLowerCase();
-                const phone = (w.phone || '').toLowerCase();
-                return name.includes(query) || agency.includes(query) || designation.includes(query) || aadhaar.includes(query) || phone.includes(query);
+                return (w.name || '').toLowerCase().includes(query) || 
+                       (w.agency || '').toLowerCase().includes(query) || 
+                       (w.designation || '').toLowerCase().includes(query) || 
+                       (w.aadhaar || '').toLowerCase().includes(query) || 
+                       (w.phone || '').toLowerCase().includes(query);
             });
 
             document.getElementById('recordCount').innerText = filtered.length;
-
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400 italic">No worker records found.</td></tr>`;
                 return;
@@ -865,50 +803,22 @@
 
             filtered.forEach((w) => {
                 const isDup = w.isDuplicateAadhaar || isAadhaarDuplicated(w.aadhaar);
-                const duplicateBadge = isDup ? `<span class="ml-1.5 bg-amber-200 text-amber-900 border border-amber-400 px-1.5 py-0.5 rounded text-[10px] font-bold">Duplicate ID</span>` : '';
-
-                const makeThumb = (thumb, fullUrl, label) => {
-                    if (!thumb) return '';
-                    return `<img src="${thumb}" onclick="openFullImageModal('${thumb}', '${fullUrl || ''}')" class="w-8 h-8 object-cover rounded border border-indigo-200 cursor-pointer hover:scale-110 transition-transform" title="Click to view full ${label}">`;
-                };
-
-                const photoEl = makeThumb(w.photoThumb, w.photoFullUrl, 'Photo');
-                const sigEl = makeThumb(w.sigThumb, w.sigFullUrl, 'Signature');
-                const proofFEl = makeThumb(w.proofFrontThumb, w.proofFrontUrl, 'ID Proof Front');
-                const proofBEl = makeThumb(w.proofBackThumb, w.proofBackUrl, 'ID Proof Back');
-                const qrEl = w.qrCode ? `<img src="${w.qrCode}" onclick="openFullImageModal('${w.qrCode}', '')" class="w-8 h-8 object-cover rounded border border-slate-200 cursor-pointer" title="Click to enlarge QR">` : '';
+                const dupBadge = isDup ? `<span class="ml-1.5 bg-amber-200 text-amber-900 border border-amber-400 px-1.5 py-0.5 rounded text-[10px] font-bold">Duplicate ID</span>` : '';
+                const makeThumb = (thumb, fullUrl, label) => thumb ? `<img src="${thumb}" onclick="openFullImageModal('${thumb}', '${fullUrl || ''}')" class="w-8 h-8 object-cover rounded border border-indigo-200 cursor-pointer hover:scale-110 transition-transform" title="View ${label}">` : '';
 
                 const tr = document.createElement('tr');
                 tr.className = isDup ? 'bg-amber-50/90 hover:bg-amber-100/80 transition-all border-b border-amber-200' : 'hover:bg-slate-50/80 transition-all border-b border-slate-100';
                 tr.innerHTML = `
-                    <td class="p-3">
-                        <div class="flex items-center gap-1 flex-wrap max-w-[140px]">
-                            ${photoEl}${sigEl}${proofFEl}${proofBEl}${qrEl}
-                        </div>
-                    </td>
-                    <td class="p-3 font-semibold text-indigo-600">${w.serialNo || '-'}${duplicateBadge}</td>
+                    <td class="p-3"><div class="flex items-center gap-1 flex-wrap max-w-[140px]">
+                        ${makeThumb(w.photoThumb, w.photoFullUrl, 'Photo')}${makeThumb(w.sigThumb, w.sigFullUrl, 'Signature')}${makeThumb(w.proofFrontThumb, w.proofFrontUrl, 'Front')}${makeThumb(w.proofBackThumb, w.proofBackUrl, 'Back')}${w.qrCode ? `<img src="${w.qrCode}" class="w-8 h-8 rounded border">` : ''}
+                    </div></td>
+                    <td class="p-3 font-semibold text-indigo-600">${w.serialNo || '-'}${dupBadge}</td>
                     <td class="p-3 text-slate-600">${w.inductionDate || '-'}</td>
-                    <td class="p-3">
-                        <p class="font-bold text-slate-800">${w.name || '-'}</p>
-                        <p class="text-[11px] text-slate-500">S/o: ${w.fatherName || '-'}</p>
-                    </td>
-                    <td class="p-3">
-                        <p class="font-semibold text-slate-700">${w.designation || '-'}</p>
-                        <p class="text-[11px] text-indigo-600 font-medium">${w.agency || '-'}</p>
-                    </td>
-                    <td class="p-3">
-                        <p class="font-semibold text-slate-800">${w.age || '-'}</p>
-                        <p class="text-[11px] text-slate-500">DOB: ${w.dob || '-'}</p>
-                    </td>
-                    <td class="p-3">
-                        <p class="font-mono text-slate-700 font-medium">${w.aadhaar || '-'}</p>
-                        <p class="text-[11px] text-slate-500">Ph: ${w.phone || '-'}</p>
-                    </td>
-                    <td class="p-3 text-right">
-                        <button onclick="editWorker('${w.id}')" class="p-1.5 bg-white hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 rounded-lg border border-slate-200 transition-all" title="Edit">
-                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                        </button>
-                    </td>
+                    <td class="p-3"><p class="font-bold text-slate-800">${w.name || '-'}</p><p class="text-[11px] text-slate-500">S/o: ${w.fatherName || '-'}</p></td>
+                    <td class="p-3"><p class="font-semibold text-slate-700">${w.designation || '-'}</p><p class="text-[11px] text-indigo-600 font-medium">${w.agency || '-'}</p></td>
+                    <td class="p-3"><p class="font-semibold text-slate-800">${w.age || '-'}</p><p class="text-[11px] text-slate-500">DOB: ${w.dob || '-'}</p></td>
+                    <td class="p-3"><p class="font-mono text-slate-700 font-medium">${w.aadhaar || '-'}</p><p class="text-[11px] text-slate-500">Ph: ${w.phone || '-'}</p></td>
+                    <td class="p-3 text-right"><button onclick="editWorker('${w.id}')" class="p-1.5 bg-white hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 rounded-lg border border-slate-200"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -918,7 +828,6 @@
         function editWorker(id) {
             const w = workers.find(item => item.id === id);
             if (!w) return;
-
             document.getElementById('editId').value = w.id;
             document.getElementById('serialNo').value = w.serialNo || '';
             document.getElementById('inductionDate').value = w.inductionDate || '';
@@ -933,7 +842,6 @@
             document.getElementById('emergency').value = w.emergency || '';
             document.getElementById('permanentAddress').value = w.permanentAddress || '';
             document.getElementById('presentAddress').value = w.presentAddress || '';
-
             document.getElementById('formTitle').innerHTML = '<i data-lucide="user-pen" class="w-5 h-5 text-indigo-600"></i> Edit Worker Record';
             document.getElementById('resetFormBtn').classList.remove('hidden');
             document.getElementById('submitBtn').innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> Update Worker Record';
@@ -942,136 +850,14 @@
         }
 
         function exportToExcel() {
-            if (workers.length === 0) {
-                showToast("No records available to export", "error");
-                return;
-            }
-
-            const headers = [
-                "Sl No",
-                "Induction Date",
-                "Worker Name",
-                "Father's Name",
-                "Designation",
-                "Agency / Contractor",
-                "Date of Birth",
-                "Age",
-                "ID Number",
-                "Phone Number",
-                "Emergency Contact",
-                "Permanent Address",
-                "Present Address",
-                "QR Code Data",
-                "Worker Photo (Full Link)",
-                "Signature (Full Link)",
-                "ID Proof Front (Link)",
-                "ID Proof Back (Link)"
-            ];
-
-            const rows = workers.map(w => [
-                w.serialNo || '',
-                w.inductionDate || '',
-                w.name || '',
-                w.fatherName || '',
-                w.designation || '',
-                w.agency || '',
-                w.dob || '',
-                w.age || '',
-                w.aadhaar || '',
-                w.phone || '',
-                w.emergency || '',
-                w.permanentAddress || '',
-                w.presentAddress || '',
-                w.qrTextData || `SlNo:${w.serialNo}|Name:${w.name}|ID:${w.aadhaar || 'N/A'}|Agency:${w.agency || 'NA'}`,
-                w.photoFullUrl || (w.photoThumb ? 'Thumbnail In App' : ''),
-                w.sigFullUrl || (w.sigThumb ? 'Thumbnail In App' : ''),
-                w.proofFrontUrl || (w.proofFrontThumb ? 'Thumbnail In App' : ''),
-                w.proofBackUrl || (w.proofBackThumb ? 'Thumbnail In App' : '')
-            ]);
-
+            if (workers.length === 0) { showToast("No records available", "error"); return; }
+            const headers = ["Sl No", "Induction Date", "Worker Name", "Father's Name", "Designation", "Agency / Contractor", "Date of Birth", "Age", "ID Number", "Phone Number", "Emergency Contact", "Permanent Address", "Present Address", "QR Code Data"];
+            const rows = workers.map(w => [w.serialNo || '', w.inductionDate || '', w.name || '', w.fatherName || '', w.designation || '', w.agency || '', w.dob || '', w.age || '', w.aadhaar || '', w.phone || '', w.emergency || '', w.permanentAddress || '', w.presentAddress || '', w.qrTextData || '']);
             const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-            const range = XLSX.utils.decode_range(worksheet['!ref']);
-
-            for (let R = range.s.r; R <= range.e.r; ++R) {
-                const isHeader = (R === 0);
-                const workerObj = !isHeader ? workers[R - 1] : null;
-                const isDup = workerObj ? (workerObj.isDuplicateAadhaar || isAadhaarDuplicated(workerObj.aadhaar)) : false;
-
-                for (let C = range.s.c; C <= range.e.c; ++C) {
-                    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-                    if (!worksheet[cellAddress]) {
-                        worksheet[cellAddress] = { t: 's', v: '' };
-                    }
-
-                    const cellVal = String(worksheet[cellAddress].v || '');
-                    if (!isHeader && cellVal.startsWith('http')) {
-                        worksheet[cellAddress].l = { Target: cellVal, Tooltip: "Click to open full original image" };
-                        worksheet[cellAddress].v = "Open Full Image";
-                    }
-
-                    const centerCols = [0, 1, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17];
-                    const horizAlign = isHeader ? "center" : (centerCols.includes(C) ? "center" : "left");
-
-                    worksheet[cellAddress].s = {
-                        font: {
-                            name: "Calibri",
-                            sz: isHeader ? 11 : 10,
-                            bold: isHeader || isDup,
-                            color: { rgb: isHeader ? "FFFFFF" : (cellVal.startsWith('http') ? "1D4ED8" : (isDup ? "7C2D12" : "0F172A")) }
-                        },
-                        fill: {
-                            fgColor: {
-                                rgb: isHeader ? "3730A3" : (isDup ? "FDE68A" : (R % 2 === 0 ? "F8FAFC" : "FFFFFF"))
-                            }
-                        },
-                        alignment: {
-                            vertical: "center",
-                            horizontal: horizAlign,
-                            wrapText: true
-                        },
-                        border: {
-                            top: { style: "thin", color: { rgb: "CBD5E1" } },
-                            bottom: { style: "thin", color: { rgb: "CBD5E1" } },
-                            left: { style: "thin", color: { rgb: "CBD5E1" } },
-                            right: { style: "thin", color: { rgb: "CBD5E1" } }
-                        }
-                    };
-                }
-            }
-
-            worksheet['!cols'] = [
-                { wch: 9 },  // Sl No
-                { wch: 14 }, // Induction Date
-                { wch: 22 }, // Worker Name
-                { wch: 20 }, // Father's Name
-                { wch: 16 }, // Designation
-                { wch: 22 }, // Agency
-                { wch: 14 }, // DOB
-                { wch: 10 }, // Age
-                { wch: 18 }, // ID Number
-                { wch: 14 }, // Phone
-                { wch: 15 }, // Emergency
-                { wch: 36 }, // Permanent Address
-                { wch: 36 }, // Present Address
-                { wch: 30 }, // QR Code Data
-                { wch: 18 }, // Photo Link
-                { wch: 18 }, // Signature Link
-                { wch: 18 }, // Proof Front Link
-                { wch: 18 }  // Proof Back Link
-            ];
-
-            const rowHeights = [{ hpt: 32 }];
-            workers.forEach(w => {
-                const maxAddrLen = Math.max((w.permanentAddress || '').length, (w.presentAddress || '').length);
-                const linesNeeded = Math.ceil(maxAddrLen / 32) || 1;
-                rowHeights.push({ hpt: Math.max(28, linesNeeded * 18) });
-            });
-            worksheet['!rows'] = rowHeights;
-
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Worker Inductions");
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Workers");
             XLSX.writeFile(workbook, "Worker_Induction_Register.xlsx");
-            showToast("Styled Excel file downloaded!");
+            showToast("Excel downloaded!");
         }
     </script>
 </body>
