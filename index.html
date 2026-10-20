@@ -359,7 +359,10 @@
         };
 
         window.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('inductionDate').valueAsDate = new Date();
+            // Set default date to today only if the field is completely empty initially
+            if (!document.getElementById('inductionDate').value) {
+                document.getElementById('inductionDate').valueAsDate = new Date();
+            }
             loadSavedSettings();
             lucide.createIcons();
             
@@ -780,11 +783,18 @@
         }
 
         function resetForm() {
+            // Keep the current inductionDate value saved so it doesn't get wiped out
+            const currentInductionDate = document.getElementById('inductionDate').value;
+
             document.getElementById('inductionForm').reset();
             document.getElementById('editId').value = '';
             document.getElementById('permLastFetched').value = '';
             document.getElementById('presLastFetched').value = '';
-            document.getElementById('inductionDate').valueAsDate = new Date();
+            
+            // Restore the user's preferred induction date
+            if (currentInductionDate) {
+                document.getElementById('inductionDate').value = currentInductionDate;
+            }
             
             ['photoPreview', 'sigPreview', 'proofFrontPreview', 'proofBackPreview'].forEach(id => {
                 const el = document.getElementById(id);
