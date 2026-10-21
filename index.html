@@ -202,6 +202,7 @@
                 <div>
                     <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Workers</p>
                     <h3 id="statTotalWorkers" class="text-3xl font-extrabold text-slate-900 mt-1">0</h3>
+                    <p class="text-xs mt-1"><span class="text-emerald-600 font-semibold">Active <span id="statActive">0</span></span> <span class="text-slate-300">•</span> <span class="text-slate-500 font-semibold">Left <span id="statLeft">0</span></span></p>
                 </div>
                 <div class="bg-indigo-50 p-3 rounded-xl text-indigo-600"><i data-lucide="users" class="w-6 h-6"></i></div>
             </div>
@@ -259,6 +260,14 @@
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Date of Induction</label>
                             <input type="date" id="inductionDate" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
                         </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Worker Status</label>
+                        <select id="status" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none font-semibold">
+                            <option value="Active">Active</option>
+                            <option value="Left">Left</option>
+                        </select>
                     </div>
 
                     <div>
@@ -371,6 +380,11 @@
                         <input type="text" id="searchInput" oninput="renderTable()" placeholder="Search Sl No, name, father, ID, phone, agency..." class="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
                     </div>
                     <div class="flex items-center gap-3 text-xs font-medium text-slate-500">
+                        <select id="statusFilter" onchange="renderTable()" class="px-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-xs font-semibold text-slate-700">
+                            <option value="">All workers</option>
+                            <option value="Active">Active only</option>
+                            <option value="Left">Left only</option>
+                        </select>
                         <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="onlyRemarks" onchange="renderTable()" class="w-3 h-3"> With remarks only</label>
                         <span>Showing <span id="recordCount">0</span></span>
                     </div>
@@ -379,7 +393,9 @@
                 <!-- Bulk action bar -->
                 <div id="bulkBar" class="hidden bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5 flex items-center justify-between">
                     <span class="text-xs font-semibold text-rose-800"><span id="selectedCount">0</span> selected</span>
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 flex-wrap justify-end">
+                        <button onclick="setStatusSelected('Active')" class="text-xs px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">Mark Active</button>
+                        <button onclick="setStatusSelected('Left')" class="text-xs px-3 py-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 text-white font-semibold">Mark Left</button>
                         <button onclick="clearSelection()" class="text-xs px-3 py-1.5 rounded-lg border border-rose-300 text-rose-700 hover:bg-white">Clear</button>
                         <button onclick="deleteSelected()" class="text-xs px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold flex items-center gap-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete Selected</button>
                     </div>
@@ -516,6 +532,24 @@
             return '';
         }
         // Manual state (if entered) wins, otherwise detect from permanent address
+        // Status: anything not marked "Left" counts as Active (older entries have no status)
+        function workerStatus(w) { return String(w.status || '').trim().toLowerCase() === 'left' ? 'Left' : 'Active'; }
+        function normStatus(v) {
+            const t = String(v || '').trim().toLowerCase();
+            if (!t) return '';
+            return t.startsWith('left') || t === 'l' ? 'Left' : t.startsWith('act') || t === 'a' ? 'Active' : '';
+        }
+        async function setStatusSelected(status) {
+            const ids = [...selectedIds];
+            if (!ids.length) return;
+            try {
+                const now = new Date().toISOString();
+                await commitInChunks(ids.map(id => batch => batch.update(workersRef.doc(id), { status, updatedAt: now })));
+                selectedIds.clear();
+                showToast(`${ids.length} worker(s) marked ${status}.`);
+            } catch (err) { showToast("Update failed.", "error"); }
+        }
+
         function workerState(w) { return normStateName(w.state) || detectState(w.permanentAddress) || 'Not known'; }
         function updateStateHint() {
             const s = detectState($('permanentAddress').value);
@@ -713,7 +747,8 @@
                 permanentAddress: pick(r, ['Permanent Address', 'permanentAddress']),
                 presentAddress: pick(r, ['Present Address', 'Temp. Address', 'presentAddress']),
                 remarks: pick(r, ['Check Note', 'Remarks', 'remarks']),
-                state: normStateName(pick(r, ['State', 'Native State', 'state']))
+                state: normStateName(pick(r, ['State', 'Native State', 'state'])),
+                status: normStatus(pick(r, ['Status', 'Worker Status', 'Status (Active / Left)', 'status']))
             };
         }
 
@@ -747,9 +782,12 @@
                         const existing = bySerial.get(normSerial(w.serialNo));
                         if (existing) {
                             updated++;
+                            if (!w.status) delete w.status; // empty status in file keeps the current status
+                            if (!w.state) delete w.state;
                             return batch => batch.update(workersRef.doc(existing.id), w);
                         }
                         added++;
+                        w.status = w.status || 'Active';
                         return batch => batch.set(workersRef.doc(), { ...w, photoThumb: '', sigThumb: '', photoUrl: '', sigUrl: '', createdAt: now });
                     });
 
@@ -1008,6 +1046,7 @@
                     presentAddress: $('presentAddress').value.trim(),
                     remarks: $('remarks').value.trim(),
                     state: normStateName($('state').value),
+                    status: $('status').value || 'Active',
                     photoThumb, sigThumb, photoUrl, sigUrl,
                     updatedAt: new Date().toISOString()
                 };
@@ -1061,6 +1100,7 @@
             $('editId').value = w.id;
             ['serialNo', 'inductionDate', 'name', 'fatherName', 'designation', 'agency', 'dob', 'age', 'aadhaar', 'phone', 'emergency', 'permanentAddress', 'presentAddress', 'remarks', 'state']
                 .forEach(f => { $(f).value = w[f] || ''; });
+            $('status').value = workerStatus(w);
             updateStateHint();
             if (w.photoThumb) { $('photoPreview').src = w.photoThumb; $('photoPreview').classList.remove('hidden'); }
             if (w.sigThumb) { $('sigPreview').src = w.sigThumb; $('sigPreview').classList.remove('hidden'); }
@@ -1086,6 +1126,9 @@
 
         function updateStats() {
             $('statTotalWorkers').innerText = workers.length;
+            const leftCount = workers.filter(w => workerStatus(w) === 'Left').length;
+            $('statActive').innerText = workers.length - leftCount;
+            $('statLeft').innerText = leftCount;
             const groups = agencyGroups();
             $('statTotalAgencies').innerText = groups.length;
             const list = $('agencyBreakdownList');
@@ -1232,6 +1275,8 @@
             return workers.filter(w => {
                 if (agencyFilter && agencyKey(w.agency) !== agencyFilter) return false;
                 if (stateFilter && workerState(w) !== stateFilter) return false;
+                const sf = $('statusFilter').value;
+                if (sf && workerStatus(w) !== sf) return false;
                 if (onlyRemarks && !(w.remarks || '').trim()) return false;
                 if (!q) return true;
                 return ['serialNo', 'name', 'fatherName', 'agency', 'designation', 'aadhaar', 'phone', 'emergency', 'remarks', 'permanentAddress']
@@ -1257,7 +1302,11 @@
             tbody.innerHTML = filtered.map(w => {
                 const isDup = (idCount.get(cleanId(w.aadhaar)) || 0) > 1;
                 const sel = selectedIds.has(w.id);
-                const rowCls = sel ? 'bg-rose-50' : isDup ? 'bg-amber-50/90 hover:bg-amber-100/80' : 'hover:bg-slate-50/80';
+                const isLeft = workerStatus(w) === 'Left';
+                const rowCls = sel ? 'bg-rose-50' : isDup ? 'bg-amber-50/90 hover:bg-amber-100/80' : isLeft ? 'bg-slate-100/70 text-slate-500 hover:bg-slate-100' : 'hover:bg-slate-50/80';
+                const statusBadge = isLeft
+                    ? '<span class="block mt-1 w-fit bg-slate-500 text-white px-1.5 py-0.5 rounded text-[10px] font-bold">LEFT</span>'
+                    : '<span class="block mt-1 w-fit bg-emerald-100 text-emerald-700 border border-emerald-300 px-1.5 py-0.5 rounded text-[10px] font-bold">ACTIVE</span>';
                 const thumbs = [
                     w.photoThumb ? `<img src="${w.photoThumb}" onclick="openImage('${w.id}','photo')" class="w-8 h-8 object-cover rounded border cursor-pointer" title="Photo">` : '',
                     w.sigThumb ? `<img src="${w.sigThumb}" onclick="openImage('${w.id}','sig')" class="w-10 h-8 object-contain bg-white rounded border cursor-pointer" title="Signature">` : '',
@@ -1265,7 +1314,7 @@
                 ].join('');
                 return `<tr class="${rowCls} transition-all">
                     <td class="p-3"><input type="checkbox" ${sel ? 'checked' : ''} onchange="toggleSelect('${w.id}', this.checked)"></td>
-                    <td class="p-3 font-semibold text-indigo-600 whitespace-nowrap">${esc(w.serialNo) || '-'}${isDup ? '<span class="ml-1 bg-amber-200 text-amber-900 border border-amber-400 px-1.5 py-0.5 rounded text-[10px] font-bold">Dup ID</span>' : ''}</td>
+                    <td class="p-3 font-semibold text-indigo-600 whitespace-nowrap">${esc(w.serialNo) || '-'}${isDup ? '<span class="ml-1 bg-amber-200 text-amber-900 border border-amber-400 px-1.5 py-0.5 rounded text-[10px] font-bold">Dup ID</span>' : ''}${statusBadge}</td>
                     <td class="p-3 text-slate-600 whitespace-nowrap">${esc(w.inductionDate) || '-'}</td>
                     <td class="p-3"><p class="font-bold text-slate-800">${esc(w.name) || '-'}</p><p class="text-[11px] text-slate-500">S/o: ${esc(w.fatherName) || '-'}</p>
                         <p class="text-[10px] text-emerald-700">📍 ${esc(workerState(w))}</p>
@@ -1286,10 +1335,10 @@
         // ================= EXPORT =================
         function exportToExcel() {
             if (!workers.length) { showToast("No records available", "error"); return; }
-            const headers = ["Sl No", "Induction Date", "Worker Name", "Father's Name", "Designation", "Agency / Contractor", "Work Tag", "Date of Birth", "Age", "ID Number", "Phone Number", "Emergency Contact", "Permanent Address", "State", "Present Address", "Remarks"];
-            const keys = ['serialNo', 'inductionDate', 'name', 'fatherName', 'designation', 'agency', '_tag', 'dob', 'age', 'aadhaar', 'phone', 'emergency', 'permanentAddress', '_state', 'presentAddress', 'remarks'];
+            const headers = ["Sl No", "Status", "Induction Date", "Worker Name", "Father's Name", "Designation", "Agency / Contractor", "Work Tag", "Date of Birth", "Age", "ID Number", "Phone Number", "Emergency Contact", "Permanent Address", "State", "Present Address", "Remarks"];
+            const keys = ['serialNo', '_status', 'inductionDate', 'name', 'fatherName', 'designation', 'agency', '_tag', 'dob', 'age', 'aadhaar', 'phone', 'emergency', 'permanentAddress', '_state', 'presentAddress', 'remarks'];
             const sorted = [...workers].sort(compareSerial);
-            const val = (w, k) => k === '_tag' ? tagOf(w.agency) : k === '_state' ? workerState(w) : String(w[k] || '');
+            const val = (w, k) => k === '_tag' ? tagOf(w.agency) : k === '_state' ? workerState(w) : k === '_status' ? workerStatus(w) : String(w[k] || '');
             const ws = XLSX.utils.aoa_to_sheet([headers, ...sorted.map(w => keys.map(k => val(w, k)))]);
 
             const border = { top: { style: 'thin', color: { rgb: 'CBD5E1' } }, bottom: { style: 'thin', color: { rgb: 'CBD5E1' } }, left: { style: 'thin', color: { rgb: 'CBD5E1' } }, right: { style: 'thin', color: { rgb: 'CBD5E1' } } };
@@ -1305,7 +1354,7 @@
                         : { alignment: { wrapText: true, vertical: 'top' }, border, ...(hasRemark ? { fill: { fgColor: { rgb: 'FEF3C7' } } } : {}) };
                 }
             }
-            ws['!cols'] = [8, 12, 24, 22, 16, 22, 18, 12, 6, 16, 13, 13, 40, 14, 24, 30].map(wch => ({ wch }));
+            ws['!cols'] = [8, 8, 12, 24, 22, 16, 22, 18, 12, 6, 16, 13, 13, 40, 14, 24, 30].map(wch => ({ wch }));
             ws['!freeze'] = { xSplit: 0, ySplit: 1 };
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Workers");
