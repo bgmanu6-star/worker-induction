@@ -58,6 +58,10 @@
                         <span class="text-indigo-100 font-medium italic">Crafted by Manu Brahma</span>
                     </p>
                 </div>
+                <div class="flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-xl pl-2.5 pr-1 py-1 ml-1">
+                    <i data-lucide="map-pinned" class="w-4 h-4 text-amber-300"></i>
+                    <select id="siteSelector" onchange="changeSite(this.value)" title="Select site" class="bg-transparent text-white text-sm font-bold outline-none cursor-pointer py-1 pr-1 [&>option]:text-slate-800"></select>
+                </div>
             </div>
             <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
                 <input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls" onchange="handleImport(event)" class="hidden">
@@ -200,7 +204,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
                 <div>
-                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Workers</p>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Workers · <span id="statSiteLabel" class="text-amber-600">CTO</span></p>
                     <h3 id="statTotalWorkers" class="text-3xl font-extrabold text-slate-900 mt-1">0</h3>
                     <p class="text-xs mt-1"><span class="text-emerald-600 font-semibold">Active <span id="statActive">0</span></span> <span class="text-slate-300">•</span> <span class="text-slate-500 font-semibold">Left <span id="statLeft">0</span></span></p>
                 </div>
@@ -260,6 +264,11 @@
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Date of Induction</label>
                             <input type="date" id="inductionDate" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
                         </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Site *</label>
+                        <select id="siteField" onchange="setAutoSerialNo()" class="w-full px-3 py-2 text-sm bg-amber-50 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-400 outline-none font-semibold text-amber-900"></select>
                     </div>
 
                     <div>
@@ -445,7 +454,49 @@
         const auth = firebase.auth();
         const workersRef = db.collection("workers");
 
-        let workers = [];
+        // ================= SITES =================
+        // Entries saved before sites were added have no "site" value and belong to CTO.
+        const SITES = [
+            { id: 'CTO', name: 'CTO, Chennai' },
+            { id: 'CCO', name: 'CCO Site, MRC Nagar, Chennai' }
+        ];
+        const DEFAULT_SITE = 'CTO';
+        let currentSite = DEFAULT_SITE;   // 'CTO', 'CCO' or 'ALL'
+        try { const s = localStorage.getItem('current_site'); if (s && (s === 'ALL' || SITES.some(x => x.id === s))) currentSite = s; } catch (e) {}
+        const siteOf = w => w.site || DEFAULT_SITE;
+        const siteName = id => (SITES.find(s => s.id === id) || { name: id }).name;
+
+        let allWorkers = [];  // every site
+        let workers = [];     // only the selected site (or all, in "All Sites" view)
+
+        function applySite() {
+            workers = currentSite === 'ALL' ? [...allWorkers] : allWorkers.filter(w => siteOf(w) === currentSite);
+        }
+
+        function changeSite(id) {
+            currentSite = id;
+            try { localStorage.setItem('current_site', id); } catch (e) {}
+            selectedIds.clear();
+            agencyFilter = ''; stateFilter = '';
+            applySite();
+            if (!$('editId').value) $('siteField').value = currentSite === 'ALL' ? DEFAULT_SITE : currentSite;
+            renderAll();
+            showToast(id === 'ALL' ? 'Showing all sites' : `Site: ${siteName(id)}`);
+        }
+
+        function fillSiteSelectors() {
+            $('siteSelector').innerHTML = SITES.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('') + '<option value="ALL">All Sites</option>';
+            $('siteSelector').value = currentSite;
+            $('siteField').innerHTML = SITES.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+            $('siteField').value = currentSite === 'ALL' ? DEFAULT_SITE : currentSite;
+        }
+
+        // Import and delete-after need one specific site
+        function requireOneSite(action) {
+            if (currentSite !== 'ALL') return true;
+            showToast(`Select CTO or CCO in the site selector before you ${action}.`, "error");
+            return false;
+        }
         let selectedFiles = { photo: null, sig: null };
         let selectedIds = new Set();
         let agencyFilter = '';
@@ -634,7 +685,7 @@
                 $('loginScreen').classList.remove('hidden');
                 if (unsubscribe) { unsubscribe(); unsubscribe = null; }
                 if (unsubscribeTags) { unsubscribeTags(); unsubscribeTags = null; }
-                workers = []; agencyTags = {};
+                workers = []; allWorkers = []; agencyTags = {};
                 renderAll();
             }
         });
@@ -659,8 +710,9 @@
         function startSync() {
             if (unsubscribe) return;
             unsubscribe = workersRef.onSnapshot(snapshot => {
-                workers = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                workers.sort(compareSerial);
+                allWorkers = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                allWorkers.sort((a, b) => siteOf(a).localeCompare(siteOf(b)) || compareSerial(a, b));
+                applySite();
                 // drop selections of deleted rows
                 selectedIds = new Set([...selectedIds].filter(id => workers.some(w => w.id === id)));
                 renderAll();
@@ -755,6 +807,8 @@
         function handleImport(event) {
             const file = event.target.files[0];
             if (!file) return;
+            if (!requireOneSite('import')) { $('csvFileInput').value = ''; return; }
+            const importSite = currentSite;
             const reader = new FileReader();
             reader.onload = async e => {
                 try {
@@ -771,7 +825,7 @@
 
                     // Match existing entries by serial number -> update instead of duplicating
                     const bySerial = new Map();
-                    workers.forEach(w => { const k = normSerial(w.serialNo); if (k && !bySerial.has(k)) bySerial.set(k, w); });
+                    allWorkers.filter(w => siteOf(w) === importSite).forEach(w => { const k = normSerial(w.serialNo); if (k && !bySerial.has(k)) bySerial.set(k, w); });
 
                     let added = 0, updated = 0;
                     const now = new Date().toISOString();
@@ -788,10 +842,10 @@
                         }
                         added++;
                         w.status = w.status || 'Active';
-                        return batch => batch.set(workersRef.doc(), { ...w, photoThumb: '', sigThumb: '', photoUrl: '', sigUrl: '', createdAt: now });
+                        return batch => batch.set(workersRef.doc(), { ...w, site: importSite, photoThumb: '', sigThumb: '', photoUrl: '', sigUrl: '', createdAt: now });
                     });
 
-                    const ok = await askConfirm(`Import ${incoming.length} rows?\n\n${added} new entries will be added and ${updated} existing entries (same Sl No) will be updated.`);
+                    const ok = await askConfirm(`Import ${incoming.length} rows into ${siteName(importSite)}?\n\n${added} new entries will be added and ${updated} existing entries (same Sl No in this site) will be updated.`);
                     if (!ok) return;
 
                     showToast(`Importing ${incoming.length} rows...`);
@@ -815,17 +869,19 @@
         function updateDeletePreview() {
             const n = parseInt($('keepUpTo').value, 10);
             if (isNaN(n)) { $('deleteAfterPreview').innerText = ''; return; }
+            if (currentSite === 'ALL') { $('deleteAfterPreview').innerText = 'Select CTO or CCO first: this works on one site at a time.'; return; }
             const list = entriesAfter(n);
-            $('deleteAfterPreview').innerText = `${list.length} of ${workers.length} entries will be deleted; ${workers.length - list.length} will be kept.`;
+            $('deleteAfterPreview').innerText = `${siteName(currentSite)}: ${list.length} of ${workers.length} entries will be deleted; ${workers.length - list.length} will be kept.`;
         }
         document.addEventListener('input', e => { if (e.target.id === 'keepUpTo') updateDeletePreview(); });
 
         async function deleteAfterSerial() {
             const n = parseInt($('keepUpTo').value, 10);
             if (isNaN(n)) { showToast("Enter a valid Sl No.", "error"); return; }
+            if (!requireOneSite('delete entries')) return;
             const list = entriesAfter(n);
             if (list.length === 0) { showToast("Nothing to delete."); return; }
-            const ok = await askConfirm(`Permanently delete ${list.length} entries after Sl No ${n}? Entries 1 to ${n} will be kept.`);
+            const ok = await askConfirm(`${siteName(currentSite)}: permanently delete ${list.length} entries after Sl No ${n}? Entries 1 to ${n} will be kept. Other sites are not touched.`);
             if (!ok) return;
             try {
                 await commitInChunks(list.map(w => batch => batch.delete(workersRef.doc(w.id))));
@@ -985,17 +1041,20 @@
 
         function setAutoSerialNo() {
             if ($('editId').value) return;
-            const nums = workers.map(w => serialNum(w.serialNo)).filter(n => !isNaN(n));
+            // Each site has its own serial numbers
+            const site = $('siteField').value || DEFAULT_SITE;
+            const nums = allWorkers.filter(w => siteOf(w) === site).map(w => serialNum(w.serialNo)).filter(n => !isNaN(n));
             $('serialNo').value = String(nums.length ? Math.max(...nums) + 1 : 1);
         }
 
         function checkDuplicateId() {
             const id = cleanId($('aadhaar').value);
             const editId = $('editId').value;
-            const others = id ? workers.filter(w => w.id !== editId && cleanId(w.aadhaar) === id) : [];
+            // checked across ALL sites, so a worker moving between sites is spotted
+            const others = id ? allWorkers.filter(w => w.id !== editId && cleanId(w.aadhaar) === id) : [];
             const warn = $('dupWarning');
             if (others.length) {
-                warn.innerText = `⚠ Same ID already used by Sl No ${others.map(o => o.serialNo).join(', ')}`;
+                warn.innerText = `⚠ Same ID already used by ${others.map(o => `${siteOf(o)} Sl No ${o.serialNo} (${o.name || '-'}, ${workerStatus(o)})`).join('; ')}`;
                 warn.classList.remove('hidden');
             } else warn.classList.add('hidden');
         }
@@ -1007,9 +1066,10 @@
             const editId = $('editId').value;
             if (!serialNo) { showToast("Serial No is required.", "error"); return; }
 
-            const clash = workers.find(w => w.id !== editId && normSerial(w.serialNo) === normSerial(serialNo));
+            const site = $('siteField').value || DEFAULT_SITE;
+            const clash = allWorkers.find(w => w.id !== editId && siteOf(w) === site && normSerial(w.serialNo) === normSerial(serialNo));
             if (clash) {
-                const ok = await askConfirm(`Sl No ${serialNo} is already used by ${clash.name || 'another entry'}. Save anyway?`);
+                const ok = await askConfirm(`${site} Sl No ${serialNo} is already used by ${clash.name || 'another entry'}. Save anyway?`);
                 if (!ok) return;
             }
 
@@ -1046,6 +1106,7 @@
                     presentAddress: $('presentAddress').value.trim(),
                     remarks: $('remarks').value.trim(),
                     state: normStateName($('state').value),
+                    site,
                     status: $('status').value || 'Active',
                     photoThumb, sigThumb, photoUrl, sigUrl,
                     updatedAt: new Date().toISOString()
@@ -1087,6 +1148,7 @@
             selectedFiles = { photo: null, sig: null };
             $('dupWarning').classList.add('hidden');
             $('stateHint').innerText = '';
+            $('siteField').value = currentSite === 'ALL' ? DEFAULT_SITE : currentSite;
             $('formTitle').innerHTML = '<i data-lucide="user-plus" class="w-5 h-5 text-indigo-600"></i> New Induction Entry';
             $('resetFormBtn').classList.add('hidden');
             setSubmitLabel();
@@ -1101,6 +1163,7 @@
             ['serialNo', 'inductionDate', 'name', 'fatherName', 'designation', 'agency', 'dob', 'age', 'aadhaar', 'phone', 'emergency', 'permanentAddress', 'presentAddress', 'remarks', 'state']
                 .forEach(f => { $(f).value = w[f] || ''; });
             $('status').value = workerStatus(w);
+            $('siteField').value = siteOf(w);
             updateStateHint();
             if (w.photoThumb) { $('photoPreview').src = w.photoThumb; $('photoPreview').classList.remove('hidden'); }
             if (w.sigThumb) { $('sigPreview').src = w.sigThumb; $('sigPreview').classList.remove('hidden'); }
@@ -1112,9 +1175,9 @@
         }
 
         // ================= STATS / SUGGESTIONS =================
-        function agencyGroups() {
+        function agencyGroups(list = workers) {
             const groups = new Map();
-            workers.forEach(w => {
+            list.forEach(w => {
                 const a = (w.agency || '').trim();
                 if (!a) return;
                 const key = a.toLowerCase();
@@ -1126,6 +1189,7 @@
 
         function updateStats() {
             $('statTotalWorkers').innerText = workers.length;
+            $('statSiteLabel').innerText = currentSite === 'ALL' ? 'All Sites' : siteName(currentSite);
             const leftCount = workers.filter(w => workerStatus(w) === 'Left').length;
             $('statActive').innerText = workers.length - leftCount;
             $('statLeft').innerText = leftCount;
@@ -1172,8 +1236,9 @@
 
         // ---- Contractor tags modal ----
         // All contractors: those used by workers + those added in the tags list (0 workers)
+        // Contractor list is shared by all sites
         function allContractors() {
-            const groups = agencyGroups();
+            const groups = agencyGroups(allWorkers);
             const seen = new Set(groups.map(g => agencyKey(g.name)));
             Object.values(agencyTags).forEach(t => {
                 const k = agencyKey(t.name);
@@ -1236,7 +1301,7 @@
 
             const workerOps = [];
             renames.forEach(({ orig, newName }) => {
-                workers.filter(w => agencyKey(w.agency) === agencyKey(orig)).forEach(w => {
+                allWorkers.filter(w => agencyKey(w.agency) === agencyKey(orig)).forEach(w => {
                     workerOps.push(batch => batch.update(workersRef.doc(w.id), { agency: newName, updatedAt: new Date().toISOString() }));
                 });
             });
@@ -1314,7 +1379,7 @@
                 ].join('');
                 return `<tr class="${rowCls} transition-all">
                     <td class="p-3"><input type="checkbox" ${sel ? 'checked' : ''} onchange="toggleSelect('${w.id}', this.checked)"></td>
-                    <td class="p-3 font-semibold text-indigo-600 whitespace-nowrap">${esc(w.serialNo) || '-'}${isDup ? '<span class="ml-1 bg-amber-200 text-amber-900 border border-amber-400 px-1.5 py-0.5 rounded text-[10px] font-bold">Dup ID</span>' : ''}${statusBadge}</td>
+                    <td class="p-3 font-semibold text-indigo-600 whitespace-nowrap">${currentSite === 'ALL' ? `<span class="block w-fit mb-0.5 bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded text-[10px] font-bold">${esc(siteOf(w))}</span>` : ''}${esc(w.serialNo) || '-'}${isDup ? '<span class="ml-1 bg-amber-200 text-amber-900 border border-amber-400 px-1.5 py-0.5 rounded text-[10px] font-bold">Dup ID</span>' : ''}${statusBadge}</td>
                     <td class="p-3 text-slate-600 whitespace-nowrap">${esc(w.inductionDate) || '-'}</td>
                     <td class="p-3"><p class="font-bold text-slate-800">${esc(w.name) || '-'}</p><p class="text-[11px] text-slate-500">S/o: ${esc(w.fatherName) || '-'}</p>
                         <p class="text-[10px] text-emerald-700">📍 ${esc(workerState(w))}</p>
@@ -1335,10 +1400,10 @@
         // ================= EXPORT =================
         function exportToExcel() {
             if (!workers.length) { showToast("No records available", "error"); return; }
-            const headers = ["Sl No", "Status", "Induction Date", "Worker Name", "Father's Name", "Designation", "Agency / Contractor", "Work Tag", "Date of Birth", "Age", "ID Number", "Phone Number", "Emergency Contact", "Permanent Address", "State", "Present Address", "Remarks"];
-            const keys = ['serialNo', '_status', 'inductionDate', 'name', 'fatherName', 'designation', 'agency', '_tag', 'dob', 'age', 'aadhaar', 'phone', 'emergency', 'permanentAddress', '_state', 'presentAddress', 'remarks'];
-            const sorted = [...workers].sort(compareSerial);
-            const val = (w, k) => k === '_tag' ? tagOf(w.agency) : k === '_state' ? workerState(w) : k === '_status' ? workerStatus(w) : String(w[k] || '');
+            const headers = ["Site", "Sl No", "Status", "Induction Date", "Worker Name", "Father's Name", "Designation", "Agency / Contractor", "Work Tag", "Date of Birth", "Age", "ID Number", "Phone Number", "Emergency Contact", "Permanent Address", "State", "Present Address", "Remarks"];
+            const keys = ['_site', 'serialNo', '_status', 'inductionDate', 'name', 'fatherName', 'designation', 'agency', '_tag', 'dob', 'age', 'aadhaar', 'phone', 'emergency', 'permanentAddress', '_state', 'presentAddress', 'remarks'];
+            const sorted = [...workers].sort((a, b) => siteOf(a).localeCompare(siteOf(b)) || compareSerial(a, b));
+            const val = (w, k) => k === '_site' ? siteOf(w) : k === '_tag' ? tagOf(w.agency) : k === '_state' ? workerState(w) : k === '_status' ? workerStatus(w) : String(w[k] || '');
             const ws = XLSX.utils.aoa_to_sheet([headers, ...sorted.map(w => keys.map(k => val(w, k)))]);
 
             const border = { top: { style: 'thin', color: { rgb: 'CBD5E1' } }, bottom: { style: 'thin', color: { rgb: 'CBD5E1' } }, left: { style: 'thin', color: { rgb: 'CBD5E1' } }, right: { style: 'thin', color: { rgb: 'CBD5E1' } } };
@@ -1354,7 +1419,7 @@
                         : { alignment: { wrapText: true, vertical: 'top' }, border, ...(hasRemark ? { fill: { fgColor: { rgb: 'FEF3C7' } } } : {}) };
                 }
             }
-            ws['!cols'] = [8, 8, 12, 24, 22, 16, 22, 18, 12, 6, 16, 13, 13, 40, 14, 24, 30].map(wch => ({ wch }));
+            ws['!cols'] = [6, 8, 8, 12, 24, 22, 16, 22, 18, 12, 6, 16, 13, 13, 40, 14, 24, 30].map(wch => ({ wch }));
             ws['!freeze'] = { xSplit: 0, ySplit: 1 };
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Workers");
@@ -1377,7 +1442,7 @@
             if (ws2[totalRef]) ws2[totalRef].s = { font: { bold: true } };
             ws2['!cols'] = [{ wch: 30 }, { wch: 22 }, { wch: 10 }];
             XLSX.utils.book_append_sheet(wb, ws2, "Summary");
-            XLSX.writeFile(wb, `Worker_Induction_Register_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            XLSX.writeFile(wb, `Worker_Induction_Register_${currentSite === 'ALL' ? 'All_Sites' : currentSite}_${new Date().toISOString().slice(0, 10)}.xlsx`);
             showToast("Excel downloaded.");
         }
 
@@ -1385,6 +1450,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             $('inductionDate').valueAsDate = new Date();
             loadSavedSettings();
+            fillSiteSelectors();
             updateSuggestions();
             lucide.createIcons();
         });
