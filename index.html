@@ -30,7 +30,7 @@
                 <div class="inline-flex bg-indigo-50 p-3 rounded-xl text-indigo-600 mb-2">
                     <i data-lucide="hard-hat" class="w-7 h-7"></i>
                 </div>
-                <h1 class="text-lg font-bold text-slate-800">Worker Induction Register <span class="text-xs font-normal text-slate-400">v3-verify</span></h1>
+                <h1 class="text-lg font-bold text-slate-800">Worker Induction Register <span class="text-xs font-normal text-slate-400">v4-cards</span></h1>
                 <p class="text-xs text-slate-500">Sign in to access the register</p>
             </div>
             <form onsubmit="handleLogin(event)" class="space-y-3">
@@ -51,7 +51,7 @@
                     <i data-lucide="hard-hat" class="w-7 h-7 text-indigo-200"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">Worker Induction Register <span class="text-xs font-normal opacity-70">v3-verify</span></h1>
+                    <h1 class="text-xl font-bold tracking-tight">Worker Induction Register <span class="text-xs font-normal opacity-70">v4-cards</span></h1>
                     <p class="text-xs text-indigo-200 flex items-center gap-1.5 mt-0.5">
                         <span>Live Multi-Device Cloud Portal</span>
                         <span class="text-indigo-300">•</span>
@@ -225,7 +225,7 @@
                 <i data-lucide="pie-chart" class="w-4 h-4 text-indigo-600"></i> Agency-wise Worker Count
                 <span class="text-[10px] font-normal normal-case text-slate-400">(tap an agency to filter)</span>
             </h3>
-            <div id="agencyBreakdownList" class="flex flex-wrap gap-2">
+            <div id="agencyBreakdownList" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                 <span class="text-sm text-slate-400 italic">No workers registered yet.</span>
             </div>
         </div>
@@ -236,7 +236,7 @@
                 <i data-lucide="map-pin" class="w-4 h-4 text-emerald-600"></i> State-wise Worker Count
                 <span class="text-[10px] font-normal normal-case text-slate-400">(from permanent address · tap to filter)</span>
             </h3>
-            <div id="stateBreakdownList" class="flex flex-wrap gap-2">
+            <div id="stateBreakdownList" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
                 <span class="text-sm text-slate-400 italic">No workers registered yet.</span>
             </div>
         </div>
@@ -1209,13 +1209,21 @@
             $('statTotalAgencies').innerText = groups.length;
             const list = $('agencyBreakdownList');
             if (!groups.length) { list.innerHTML = '<span class="text-sm text-slate-400 italic">No workers registered yet.</span>'; return; }
+            const maxA = Math.max(...groups.map(g => g.count), 1);
             list.innerHTML = groups.map(g => {
                 const key = agencyKey(g.name);
                 const active = agencyFilter && agencyFilter === key;
                 const tag = tagOf(g.name);
-                return `<button onclick="setAgencyFilter(${esc(JSON.stringify(key))})" class="${active ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'} border px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 text-left">
-                    <span>${esc(g.name)}${tag ? `<span class="block text-[10px] font-medium ${active ? 'text-indigo-100' : 'text-violet-600'}">${esc(tag)}</span>` : ''}</span>
-                    <span class="${active ? 'bg-white text-indigo-700' : 'bg-indigo-600 text-white'} px-2 py-0.5 rounded-full text-[10px]">${g.count}</span></button>`;
+                const w = Math.max(4, Math.round(g.count * 100 / maxA));
+                return `<button onclick="setAgencyFilter(${esc(JSON.stringify(key))})" class="${active ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-white border-slate-200 text-slate-800 hover:border-indigo-400 hover:shadow-md'} border rounded-2xl p-3 text-left transition flex flex-col justify-between min-h-[92px]">
+                    <div class="flex items-start justify-between gap-2">
+                        <span class="text-xs font-bold leading-snug break-words">${esc(g.name)}</span>
+                        <span class="${active ? 'bg-white text-indigo-700' : 'bg-indigo-50 text-indigo-700'} px-2 py-0.5 rounded-lg text-sm font-extrabold">${g.count}</span>
+                    </div>
+                    <div>
+                        ${tag ? `<span class="block text-[10px] font-medium mb-1 ${active ? 'text-indigo-100' : 'text-violet-600'}">${esc(tag)}</span>` : ''}
+                        <div class="h-1.5 rounded-full ${active ? 'bg-indigo-400' : 'bg-slate-100'} overflow-hidden"><div class="h-full rounded-full ${active ? 'bg-white' : 'bg-indigo-500'}" style="width:${w}%"></div></div>
+                    </div></button>`;
             }).join('');
         }
 
@@ -1230,13 +1238,24 @@
             if (!workers.length) { list.innerHTML = '<span class="text-sm text-slate-400 italic">No workers registered yet.</span>'; return; }
             const counts = new Map();
             workers.forEach(w => { const s = workerState(w); counts.set(s, (counts.get(s) || 0) + 1); });
+            if (!counts.has('Nepal')) counts.set('Nepal', 0);
             const sorted = [...counts.entries()].sort((a, b) => (a[0] === 'Not known') - (b[0] === 'Not known') || b[1] - a[1]);
+            const maxS = Math.max(...sorted.map(x => x[1]), 1);
             list.innerHTML = sorted.map(([s, n]) => {
                 const active = stateFilter === s;
                 const unknown = s === 'Not known';
+                const nepal = s === 'Nepal';
                 const pct = Math.round(n * 100 / workers.length);
-                return `<button onclick="setStateFilter(${esc(JSON.stringify(s))})" class="${active ? 'bg-emerald-600 text-white border-emerald-600' : unknown ? 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100' : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'} border px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2">
-                    <span>${esc(s)}</span><span class="${active ? 'bg-white text-emerald-700' : 'bg-emerald-600 text-white'} px-2 py-0.5 rounded-full text-[10px]">${n}</span><span class="text-[10px] font-normal ${active ? 'text-emerald-100' : 'text-slate-400'}">${pct}%</span></button>`;
+                const w = n ? Math.max(4, Math.round(n * 100 / maxS)) : 0;
+                const base = active ? 'bg-emerald-600 border-emerald-600 text-white shadow-md' : unknown ? 'bg-amber-50 border-amber-300 text-amber-900 hover:shadow-md' : nepal ? 'bg-rose-50 border-rose-300 text-rose-900 hover:shadow-md' : 'bg-white border-slate-200 text-slate-800 hover:border-emerald-400 hover:shadow-md';
+                const bar = active ? 'bg-white' : unknown ? 'bg-amber-500' : nepal ? 'bg-rose-500' : 'bg-emerald-500';
+                return `<button onclick="setStateFilter(${esc(JSON.stringify(s))})" class="${base} border rounded-2xl p-3 text-left transition">
+                    <div class="flex items-center justify-between gap-1">
+                        <span class="text-xs font-bold leading-snug">${nepal ? '🇳🇵 ' : ''}${esc(s)}</span>
+                        <span class="text-[10px] ${active ? 'text-emerald-100' : 'text-slate-400'}">${pct}%</span>
+                    </div>
+                    <div class="text-2xl font-extrabold mt-1">${n}</div>
+                    <div class="h-1.5 rounded-full mt-2 ${active ? 'bg-emerald-400' : 'bg-slate-100'} overflow-hidden"><div class="h-full rounded-full ${bar}" style="width:${w}%"></div></div></button>`;
             }).join('');
         }
 
