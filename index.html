@@ -18,10 +18,15 @@
     <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: linear-gradient(180deg,#eef1f8 0%,#f6f7fb 220px,#f6f7fb 100%) fixed; -webkit-font-smoothing: antialiased; }
+        header.sticky { background: linear-gradient(120deg,#2b3a67 0%,#3b4f8f 55%,#3f6a9e 100%) !important; box-shadow: 0 4px 18px -6px rgba(43,58,103,.45); }
+        #loginScreen { background: linear-gradient(135deg,#2b3a67,#3f6a9e) !important; }
+        main .rounded-2xl.bg-white { border-color:#e3e7f1; box-shadow: 0 1px 2px rgba(30,41,80,.04), 0 6px 18px -10px rgba(30,41,80,.12); }
+        .tint-card { transition: transform .15s ease, box-shadow .15s ease; box-shadow: 0 1px 2px rgba(30,41,80,.05); }
+        .tint-card:hover { transform: translateY(-2px); box-shadow: 0 8px 18px -10px rgba(30,41,80,.28); }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen pb-12">
+<body class="text-slate-800 min-h-screen pb-12">
 
     <!-- ================= LOGIN SCREEN ================= -->
     <div id="loginScreen" class="fixed inset-0 bg-indigo-800 z-[60] flex items-center justify-center p-4">
@@ -30,7 +35,7 @@
                 <div class="inline-flex bg-indigo-50 p-3 rounded-xl text-indigo-600 mb-2">
                     <i data-lucide="hard-hat" class="w-7 h-7"></i>
                 </div>
-                <h1 class="text-lg font-bold text-slate-800">Worker Induction Register <span class="text-xs font-normal text-slate-400">v4-cards</span></h1>
+                <h1 class="text-lg font-bold text-slate-800">Worker Induction Register <span class="text-xs font-normal text-slate-400">v5-theme</span></h1>
                 <p class="text-xs text-slate-500">Sign in to access the register</p>
             </div>
             <form onsubmit="handleLogin(event)" class="space-y-3">
@@ -51,7 +56,7 @@
                     <i data-lucide="hard-hat" class="w-7 h-7 text-indigo-200"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">Worker Induction Register <span class="text-xs font-normal opacity-70">v4-cards</span></h1>
+                    <h1 class="text-xl font-bold tracking-tight">Worker Induction Register <span class="text-xs font-normal opacity-70">v5-theme</span></h1>
                     <p class="text-xs text-indigo-200 flex items-center gap-1.5 mt-0.5">
                         <span>Live Multi-Device Cloud Portal</span>
                         <span class="text-indigo-300">•</span>
@@ -202,7 +207,7 @@
 
         <!-- Stats -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+            <div style="background:#eef0fb;border-color:#d5daf3" class="p-5 rounded-2xl border flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Workers · <span id="statSiteLabel" class="text-amber-600">CTO</span></p>
                     <h3 id="statTotalWorkers" class="text-3xl font-extrabold text-slate-900 mt-1">0</h3>
@@ -210,7 +215,7 @@
                 </div>
                 <div class="bg-indigo-50 p-3 rounded-xl text-indigo-600"><i data-lucide="users" class="w-6 h-6"></i></div>
             </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+            <div style="background:#e8f5f1;border-color:#c9e6dd" class="p-5 rounded-2xl border flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Agencies</p>
                     <h3 id="statTotalAgencies" class="text-3xl font-extrabold text-slate-900 mt-1">0</h3>
@@ -1199,6 +1204,19 @@
             return [...groups.values()].sort((a, b) => b.count - a.count);
         }
 
+        const PAL = [
+            {bg:'#eef0fb',bd:'#d5daf3',tx:'#2f3a73',bar:'#6b78d6',chip:'#dfe3f8'},
+            {bg:'#e8f5f1',bd:'#c9e6dd',tx:'#1f5a4b',bar:'#3fa68a',chip:'#d3ede5'},
+            {bg:'#fdf3e3',bd:'#f3e0bd',tx:'#7a5316',bar:'#d9a03f',chip:'#f8e6c4'},
+            {bg:'#fcecee',bd:'#f3d0d5',tx:'#80303c',bar:'#d4707f',chip:'#f7d9de'},
+            {bg:'#e9f3fb',bd:'#cbe2f3',tx:'#1f4e78',bar:'#4a96cf',chip:'#d5e8f6'},
+            {bg:'#f3eefa',bd:'#e0d4f1',tx:'#51367a',bar:'#8e6cc4',chip:'#e6dcf5'},
+            {bg:'#f0f5e6',bd:'#dbe7c2',tx:'#46591d',bar:'#8aac3f',chip:'#e3edcc'}
+        ];
+        function palFor(name) { let h = 0; for (const c of String(name)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return PAL[h % PAL.length]; }
+        const NEPAL_PAL = {bg:'#fdeceb',bd:'#f2c9c6',tx:'#8a2d2a',bar:'#d65a55',chip:'#f8d6d4'};
+        const ACTIVE_PAL = {bg:'#35457f',bd:'#35457f',tx:'#ffffff',bar:'#ffffff',chip:'rgba(255,255,255,.18)'};
+
         function updateStats() {
             $('statTotalWorkers').innerText = workers.length;
             $('statSiteLabel').innerText = currentSite === 'ALL' ? 'All Sites' : siteName(currentSite);
@@ -1215,14 +1233,15 @@
                 const active = agencyFilter && agencyFilter === key;
                 const tag = tagOf(g.name);
                 const w = Math.max(4, Math.round(g.count * 100 / maxA));
-                return `<button onclick="setAgencyFilter(${esc(JSON.stringify(key))})" class="${active ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' : 'bg-white border-slate-200 text-slate-800 hover:border-indigo-400 hover:shadow-md'} border rounded-2xl p-3 text-left transition flex flex-col justify-between min-h-[92px]">
+                const p = active ? ACTIVE_PAL : palFor(g.name);
+                return `<button onclick="setAgencyFilter(${esc(JSON.stringify(key))})" class="tint-card border rounded-2xl p-3 text-left flex flex-col justify-between min-h-[92px]" style="background:${p.bg};border-color:${p.bd};color:${p.tx}">
                     <div class="flex items-start justify-between gap-2">
-                        <span class="text-xs font-bold leading-snug break-words">${esc(g.name)}</span>
-                        <span class="${active ? 'bg-white text-indigo-700' : 'bg-indigo-50 text-indigo-700'} px-2 py-0.5 rounded-lg text-sm font-extrabold">${g.count}</span>
+                        <span class="text-xs font-semibold leading-snug break-words">${esc(g.name)}</span>
+                        <span class="px-2 py-0.5 rounded-lg text-sm font-bold" style="background:${p.chip}">${g.count}</span>
                     </div>
                     <div>
-                        ${tag ? `<span class="block text-[10px] font-medium mb-1 ${active ? 'text-indigo-100' : 'text-violet-600'}">${esc(tag)}</span>` : ''}
-                        <div class="h-1.5 rounded-full ${active ? 'bg-indigo-400' : 'bg-slate-100'} overflow-hidden"><div class="h-full rounded-full ${active ? 'bg-white' : 'bg-indigo-500'}" style="width:${w}%"></div></div>
+                        ${tag ? `<span class="block text-[10px] font-medium mb-1 opacity-75">${esc(tag)}</span>` : ''}
+                        <div class="h-1.5 rounded-full overflow-hidden" style="background:${p.chip}"><div class="h-full rounded-full" style="width:${w}%;background:${p.bar}"></div></div>
                     </div></button>`;
             }).join('');
         }
@@ -1247,15 +1266,14 @@
                 const nepal = s === 'Nepal';
                 const pct = Math.round(n * 100 / workers.length);
                 const w = n ? Math.max(4, Math.round(n * 100 / maxS)) : 0;
-                const base = active ? 'bg-emerald-600 border-emerald-600 text-white shadow-md' : unknown ? 'bg-amber-50 border-amber-300 text-amber-900 hover:shadow-md' : nepal ? 'bg-rose-50 border-rose-300 text-rose-900 hover:shadow-md' : 'bg-white border-slate-200 text-slate-800 hover:border-emerald-400 hover:shadow-md';
-                const bar = active ? 'bg-white' : unknown ? 'bg-amber-500' : nepal ? 'bg-rose-500' : 'bg-emerald-500';
-                return `<button onclick="setStateFilter(${esc(JSON.stringify(s))})" class="${base} border rounded-2xl p-3 text-left transition">
+                const p = active ? ACTIVE_PAL : nepal ? NEPAL_PAL : unknown ? {bg:'#f3f4f6',bd:'#e0e3e8',tx:'#4b5563',bar:'#9ca3af',chip:'#e5e7eb'} : palFor(s);
+                return `<button onclick="setStateFilter(${esc(JSON.stringify(s))})" class="tint-card border rounded-2xl p-3 text-left" style="background:${p.bg};border-color:${p.bd};color:${p.tx}">
                     <div class="flex items-center justify-between gap-1">
-                        <span class="text-xs font-bold leading-snug">${nepal ? '🇳🇵 ' : ''}${esc(s)}</span>
-                        <span class="text-[10px] ${active ? 'text-emerald-100' : 'text-slate-400'}">${pct}%</span>
+                        <span class="text-xs font-semibold leading-snug">${nepal ? '🇳🇵 ' : ''}${esc(s)}</span>
+                        <span class="text-[10px] opacity-70">${pct}%</span>
                     </div>
-                    <div class="text-2xl font-extrabold mt-1">${n}</div>
-                    <div class="h-1.5 rounded-full mt-2 ${active ? 'bg-emerald-400' : 'bg-slate-100'} overflow-hidden"><div class="h-full rounded-full ${bar}" style="width:${w}%"></div></div></button>`;
+                    <div class="text-2xl font-bold mt-1">${n}</div>
+                    <div class="h-1.5 rounded-full mt-2 overflow-hidden" style="background:${p.chip}"><div class="h-full rounded-full" style="width:${w}%;background:${p.bar}"></div></div></button>`;
             }).join('');
         }
 
