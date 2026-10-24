@@ -854,7 +854,15 @@
 
                     showToast(`Importing ${ops.length} changes...`);
                     await commitInChunks(ops);
-                    showToast(`Done: ${added} added, ${updated} updated.`);
+                    showToast(`Saved ${ops.length} changes. Verifying with the server...`);
+                    // read back from the SERVER (not the local cache) to prove the rows really persisted
+                    try {
+                        const snap = await workersRef.get({ source: 'server' });
+                        const onServer = snap.docs.filter(d => siteOf({ id: d.id, ...d.data() }) === importSite).length;
+                        showToast(`Server now holds ${onServer} entries for this site (file had ${incoming.length}).`, onServer >= incoming.length ? undefined : 'error');
+                    } catch (ve) {
+                        showToast("Saved, but could not verify with server (" + (ve.code || ve.message) + ").", "error");
+                    }
                 } catch (err) {
                     console.error("Import error:", err);
                     showToast("Import failed (" + (err.code || 'error') + "): " + (err.code === 'permission-denied' ? "no permission." : err.code === 'resource-exhausted' ? "Firebase daily write limit reached - wait until tomorrow and import again (already-saved rows are skipped)." : (err.message || "check the file format.")), "error");
