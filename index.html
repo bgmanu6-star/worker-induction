@@ -672,7 +672,8 @@
             for (let i = 0; i < ops.length; i += 400) {
                 const batch = db.batch();
                 ops.slice(i, i + 400).forEach(op => op(batch));
-                await batch.commit();
+                try { await batch.commit(); }
+                catch (e) { e.message = `saved ${i} of ${ops.length} before stopping. ` + (e.message || ''); throw e; }
             }
         }
 
@@ -827,7 +828,7 @@
                     const bySerial = new Map();
                     allWorkers.filter(w => siteOf(w) === importSite).forEach(w => { const k = normSerial(w.serialNo); if (k && !bySerial.has(k)) bySerial.set(k, w); });
 
-                    let added = 0, updated = 0;
+                    let added = 0, updated = 0, unchanged = 0;
                     const now = new Date().toISOString();
                     const ops = incoming.map(w => {
                         if (w.dob && !w.age) w.age = ageFromDob(w.dob);
@@ -835,6 +836,9 @@
                         w.updatedAt = now;
                         const existing = bySerial.get(normSerial(w.serialNo));
                         if (existing) {
+                            // skip rows that are already identical (saves Firestore writes)
+                            const keys = ['inductionDate','name','fatherName','designation','agency','dob','age','aadhaar','phone','emergency','permanentAddress','presentAddress','remarks'];
+                            if (keys.every(k => String(existing[k] ?? '') === String(w[k] ?? '')) && (!w.status || w.status === existing.status) && (!w.state || w.state === existing.state)) { unchanged++; return null; }
                             updated++;
                             if (!w.status) delete w.status; // empty status in file keeps the current status
                             if (!w.state) delete w.state;
@@ -843,17 +847,17 @@
                         added++;
                         w.status = w.status || 'Active';
                         return batch => batch.set(workersRef.doc(), { ...w, site: importSite, photoThumb: '', sigThumb: '', photoUrl: '', sigUrl: '', createdAt: now });
-                    });
+                   }).filter(Boolean);
 
-                    const ok = await askConfirm(`Import ${incoming.length} rows into ${siteName(importSite)}?\n\n${added} new entries will be added and ${updated} existing entries (same Sl No in this site) will be updated.`);
+                    const ok = await askConfirm(`Import ${incoming.length} rows into ${siteName(importSite)}?\n\n${added} new entries will be added, ${updated} existing entries will be updated and ${unchanged} are unchanged (skipped).`);
                     if (!ok) return;
 
-                    showToast(`Importing ${incoming.length} rows...`);
+                    showToast(`Importing ${ops.length} changes...`);
                     await commitInChunks(ops);
                     showToast(`Done: ${added} added, ${updated} updated.`);
                 } catch (err) {
                     console.error("Import error:", err);
-                    showToast("Import failed: " + (err.code === 'permission-denied' ? "no permission." : "check the file format."), "error");
+                    showToast("Import failed (" + (err.code || 'error') + "): " + (err.code === 'permission-denied' ? "no permission." : err.code === 'resource-exhausted' ? "Firebase daily write limit reached - wait until tomorrow and import again (already-saved rows are skipped)." : (err.message || "check the file format.")), "error");
                 } finally {
                     $('csvFileInput').value = '';
                 }
