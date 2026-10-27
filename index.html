@@ -459,6 +459,22 @@
         const auth = firebase.auth();
         const workersRef = db.collection("workers");
 
+        // ── CTO-ConNect sync ──────────────────────────────────────────────
+        // A second Firebase app pointing at the CTO-ConNect project so we can
+        // increment workerInductionCount whenever a NEW induction is saved here.
+        const ctoApp = firebase.initializeApp({
+            apiKey: "AIzaSyDSfDVHm4v1-wakACAhlWzjwvz9GLKxcBE",
+            authDomain: "cpspl-safety-portal.firebaseapp.com",
+            projectId: "cpspl-safety-portal"
+        }, "cto-connect");
+        const ctoDb = ctoApp.firestore();
+        function incrementCtoInductionCount() {
+            ctoDb.collection('cpspl_safety').doc('state').update({
+                workerInductionCount: firebase.firestore.FieldValue.increment(1)
+            }).catch(e => console.warn("CTO-ConNect sync failed:", e));
+        }
+        // ─────────────────────────────────────────────────────────────────
+
         // ================= SITES =================
         // Entries saved before sites were added have no "site" value and belong to CTO.
         const SITES = [
@@ -1136,6 +1152,7 @@
                 } else {
                     data.createdAt = data.updatedAt;
                     await workersRef.add(data);
+                    incrementCtoInductionCount(); // sync count to CTO-ConNect dashboard
                     showToast("Worker saved.");
                 }
                 resetForm();
