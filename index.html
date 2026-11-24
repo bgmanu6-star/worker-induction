@@ -24,6 +24,21 @@
         main .rounded-2xl.bg-white { border-color:#e3e7f1; box-shadow: 0 1px 2px rgba(30,41,80,.04), 0 6px 18px -10px rgba(30,41,80,.12); }
         .tint-card { transition: transform .15s ease, box-shadow .15s ease; box-shadow: 0 1px 2px rgba(30,41,80,.05); }
         .tint-card:hover { transform: translateY(-2px); box-shadow: 0 8px 18px -10px rgba(30,41,80,.28); }
+        /* ---- Mobile: entry form becomes a full-screen 2-step sheet (no scrolling) ---- */
+        @media (max-width: 1023.98px) {
+            #formCard { display:none; position:fixed; inset:0; z-index:45; height:100vh; height:100dvh; border-radius:0; border:0; box-shadow:none; padding:12px 14px calc(12px + env(safe-area-inset-bottom)); flex-direction:column; }
+            body.form-open #formCard { display:flex; }
+            body.form-open { overflow:hidden; }
+            body.form-open #fabNew { display:none; }
+            #formHead { margin-bottom:.6rem; padding-bottom:.5rem; }
+            #inductionForm { flex:1; min-height:0; display:flex; flex-direction:column; }
+            #inductionForm .formBody { flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+            #inductionForm .step { display:none; }
+            #inductionForm[data-step="1"] .step1, #inductionForm[data-step="2"] .step2 { display:block; }
+            #inductionForm[data-step="1"] #submitBtn, #inductionForm[data-step="1"] #backBtn, #inductionForm[data-step="2"] #nextBtn { display:none; }
+            #inductionForm input:not([type=checkbox]):not([type=file]), #inductionForm select, #inductionForm textarea { font-size:16px; padding:.4rem .6rem; min-width:0; }
+            #inductionForm label.block { margin-bottom:.1rem; }
+        }
     </style>
 </head>
 <body class="text-slate-800 min-h-screen pb-12">
@@ -249,17 +264,22 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- ============ FORM ============ -->
-            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
-                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <div id="formCard" class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
+                <div id="formHead" class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                     <h2 id="formTitle" class="text-base font-bold text-slate-800 flex items-center gap-2">
                         <i data-lucide="user-plus" class="w-5 h-5 text-indigo-600"></i> New Induction Entry
                     </h2>
-                    <button type="button" id="resetFormBtn" onclick="resetForm()" class="hidden text-xs text-rose-600 hover:underline font-medium">Cancel Edit</button>
+                    <span class="flex items-center gap-3">
+                        <span id="formStepLabel" class="lg:hidden text-[11px] text-slate-500 font-medium"></span>
+                        <button type="button" id="resetFormBtn" onclick="resetForm(); closeFormSheet();" class="hidden text-xs text-rose-600 hover:underline font-medium">Cancel Edit</button>
+                        <button type="button" onclick="closeFormSheet()" aria-label="Close" class="lg:hidden w-8 h-8 rounded-full bg-slate-100 text-slate-600 text-lg leading-none">&times;</button>
+                    </span>
                 </div>
 
-                <form id="inductionForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <form id="inductionForm" data-step="1" onsubmit="handleFormSubmit(event)" class="">
                     <input type="hidden" id="editId">
-
+                    <div class="formBody">
+                        <div class="step step1 space-y-3 lg:space-y-4">
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Serial No *</label>
@@ -270,12 +290,11 @@
                             <input type="date" id="inductionDate" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
                         </div>
                     </div>
-
+<div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Site *</label>
                         <select id="siteField" onchange="setAutoSerialNo()" class="w-full px-3 py-2 text-sm bg-amber-50 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-400 outline-none font-semibold text-amber-900"></select>
                     </div>
-
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Worker Status</label>
                         <select id="status" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none font-semibold">
@@ -283,17 +302,15 @@
                             <option value="Left">Left</option>
                         </select>
                     </div>
-
+</div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Full Name</label>
                         <input type="text" id="name" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Worker full name">
                     </div>
-
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Father's / Husband's Name</label>
                         <input type="text" id="fatherName" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
                     </div>
-
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Designation</label>
@@ -306,7 +323,6 @@
                             <datalist id="agencySuggestions"></datalist>
                         </div>
                     </div>
-
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Date of Birth</label>
@@ -317,13 +333,13 @@
                             <input type="text" id="age" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Auto from DOB">
                         </div>
                     </div>
-
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Aadhaar / ID Number</label>
                         <input type="text" id="aadhaar" maxlength="20" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none font-mono">
                         <p id="dupWarning" class="hidden text-[11px] text-amber-700 font-semibold mt-1"></p>
                     </div>
-
+                        </div>
+                        <div class="step step2 space-y-3 lg:space-y-4 lg:mt-4">
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Phone (Personal)</label>
@@ -334,7 +350,6 @@
                             <input type="tel" id="emergency" maxlength="10" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Bottom number">
                         </div>
                     </div>
-
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <label class="block text-xs font-semibold text-slate-600">Permanent Address</label>
@@ -342,13 +357,11 @@
                         </div>
                         <textarea id="permanentAddress" rows="2" oninput="updateStateHint()" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
                     </div>
-
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Native State <span id="stateHint" class="font-normal text-emerald-600"></span></label>
                         <input type="text" id="state" list="stateList" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Leave empty to detect from address">
                         <datalist id="stateList"></datalist>
                     </div>
-
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <label class="block text-xs font-semibold text-slate-600">Present Address</label>
@@ -359,12 +372,10 @@
                         <input type="text" id="presentAddress" list="presentSuggestions" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
                         <datalist id="presentSuggestions"></datalist>
                     </div>
-
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Remarks</label>
                         <input type="text" id="remarks" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. Rejected, Left, verify phone">
                     </div>
-
                     <div class="grid grid-cols-2 gap-3 pt-1">
                         <div onclick="document.getElementById('photoInput').click()" class="cursor-pointer bg-slate-50 hover:bg-slate-100 p-2.5 rounded-xl border border-slate-200 flex flex-col items-center text-center">
                             <span class="block text-[11px] font-semibold text-slate-600 mb-1">Worker Photo <span class="text-slate-400 font-normal">(Opt)</span></span>
@@ -379,10 +390,15 @@
                             <img id="sigPreview" class="w-14 h-10 object-contain bg-white rounded mt-1.5 hidden border">
                         </div>
                     </div>
-
-                    <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg text-sm shadow-md flex items-center justify-center gap-2">
+                        </div>
+                    </div>
+                    <div id="formFooter" class="pt-3 flex gap-2">
+                        <button type="button" id="backBtn" onclick="formStep(1)" class="lg:hidden px-4 py-2.5 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium">&#8249; Back</button>
+                        <button type="button" id="nextBtn" onclick="formNext()" class="lg:hidden flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg text-sm shadow-md">Next &#8250;</button>
+                    <button type="submit" id="submitBtn" class="flex-1 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg text-sm shadow-md flex items-center justify-center gap-2">
                         <i data-lucide="user-check" class="w-4 h-4"></i> Save Induction Record
                     </button>
+                    </div>
                 </form>
             </div>
 
@@ -438,6 +454,11 @@
             </div>
         </div>
     </main>
+
+    <!-- Floating "New Entry" button (mobile) -->
+    <button id="fabNew" type="button" onclick="newEntry()" class="lg:hidden fixed bottom-5 right-5 z-40 bg-indigo-600 text-white px-5 py-3 rounded-full shadow-xl text-sm font-semibold flex items-center gap-2">
+        <span class="text-lg leading-none">+</span> New Entry
+    </button>
 
     <!-- Toast -->
     <div id="toast" class="fixed bottom-5 right-5 translate-y-20 opacity-0 transition-all duration-300 z-[70] bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 text-sm max-w-xs">
@@ -1156,6 +1177,7 @@
                     showToast("Worker saved.");
                 }
                 resetForm();
+                if (editId) closeFormSheet();
             } catch (error) {
                 console.error(error);
                 showToast("Error saving to cloud.", "error");
@@ -1164,6 +1186,31 @@
                 setSubmitLabel();
             }
         }
+
+        // ================= MOBILE FORM SHEET =================
+        const isMobileView = () => window.matchMedia('(max-width: 1023.98px)').matches;
+        function formStep(n) {
+            $('inductionForm').dataset.step = n;
+            $('formStepLabel').innerText = n === 1 ? 'Step 1 of 2 · Worker' : 'Step 2 of 2 · Contact';
+            const body = document.querySelector('#inductionForm .formBody');
+            if (body) body.scrollTop = 0;
+        }
+        function formNext() {
+            if (!$('serialNo').value.trim()) { showToast("Serial No is required.", "error"); $('serialNo').focus(); return; }
+            formStep(2);
+            setTimeout(() => $('phone').focus(), 60);
+        }
+        function openFormSheet() { document.body.classList.add('form-open'); }
+        function closeFormSheet() { document.body.classList.remove('form-open'); }
+        function newEntry() {
+            if ($('editId').value) resetForm();
+            formStep(1);
+            openFormSheet();
+        }
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && e.target.closest && e.target.closest('#inductionForm') && e.target.tagName !== 'TEXTAREA'
+                && isMobileView() && $('inductionForm').dataset.step === '1') { e.preventDefault(); formNext(); }
+        });
 
         function setSubmitLabel() {
             $('submitBtn').innerHTML = $('editId').value
@@ -1187,6 +1234,7 @@
             $('resetFormBtn').classList.add('hidden');
             setSubmitLabel();
             setAutoSerialNo();
+            formStep(1);
         }
 
         function editWorker(id) {
@@ -1205,7 +1253,7 @@
             $('resetFormBtn').classList.remove('hidden');
             setSubmitLabel();
             checkDuplicateId();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (isMobileView()) openFormSheet(); else window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         // ================= STATS / SUGGESTIONS =================
